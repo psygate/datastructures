@@ -22,6 +22,7 @@ import com.psygate.datastructures.maps.Pair;
 import com.psygate.datastructures.spatial.d2.IDBoundingBox;
 import com.psygate.datastructures.spatial.d2.IDPoint;
 import com.psygate.datastructures.spatial.d2.trees.DBoundingBox;
+import com.psygate.datastructures.spatial.d2.trees.IDBBQuadTree;
 import com.psygate.datastructures.spatial.d2.trees.IDPointQuadTree;
 import com.psygate.datastructures.spatial.d2.trees.IDPointQuadTree;
 import java.util.Collection;
@@ -49,25 +50,25 @@ import java.util.stream.StreamSupport;
  *
  * @author psygate (https://github.com/psygate)
  */
-public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, V> {
+public class DBBQuadTree<K extends IDBoundingBox, V> implements IDBBQuadTree<K, V> {
 
     private int size = 0;
     private final int maxNodeSize;
-    private final DPointQuadNode<K, V> root;
+    private final DBBQuadNode<K, V> root;
     private final AtomicLong modcnt = new AtomicLong(Long.MIN_VALUE);
 
-    public DPointQuadTree(IDPointQuadTree<K, V> orig) {
+    public DBBQuadTree(DBBQuadTree<K, V> orig) {
         maxNodeSize = orig.getMaxNodeSize();
-        root = new DPointQuadNode<>(new DBoundingBox(Objects.requireNonNull(orig.getBounds())), this);
+        root = new DBBQuadNode<>(new DBoundingBox(Objects.requireNonNull(orig.getBounds())), this);
         putAll(orig.entryStream());
     }
 
-    public DPointQuadTree(int maxNodeSize, IDBoundingBox bounds) {
+    public DBBQuadTree(int maxNodeSize, IDBoundingBox bounds) {
         if (maxNodeSize <= 0) {
             throw new IllegalArgumentException("Size cannot be smaller or equal to zero");
         }
         this.maxNodeSize = maxNodeSize;
-        root = new DPointQuadNode<>(new DBoundingBox(Objects.requireNonNull(bounds)), this);
+        root = new DBBQuadNode<>(new DBoundingBox(Objects.requireNonNull(bounds)), this);
     }
 
     @Override
@@ -274,24 +275,24 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         size = 0;
     }
 
-    Iterator<DPointQuadNode<K, V>> nodeIterator() {
+    Iterator<DBBQuadNode<K, V>> nodeIterator() {
 
         return new NodeIterator();
     }
 
-    Iterator<DPointQuadNode<K, V>> nodeIterator(Predicate<IDBoundingBox> pred) {
+    Iterator<DBBQuadNode<K, V>> nodeIterator(Predicate<IDBoundingBox> pred) {
 
         return new NodeIterator(pred);
     }
 
     public boolean checkIntegrity() {
         assert root != null;
-        Set<DPointQuadNode<K, V>> visited = new HashSet<>();
-        Queue<DPointQuadNode<K, V>> stack = new LinkedList<>();
+        Set<DBBQuadNode<K, V>> visited = new HashSet<>();
+        Queue<DBBQuadNode<K, V>> stack = new LinkedList<>();
         stack.add(root);
 
         while (!stack.isEmpty()) {
-            DPointQuadNode<K, V> node = stack.remove();
+            DBBQuadNode<K, V> node = stack.remove();
             node.checkIntegrity();
             if (visited.contains(node)) {
                 return false;
@@ -305,13 +306,13 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         return root.countElements() == size;
     }
 
-    private final class SelectiveTreeNodeSpliterator implements Spliterator<DPointQuadNode<K, V>> {
+    private final class SelectiveTreeNodeSpliterator implements Spliterator<DBBQuadNode<K, V>> {
 
-        private final LinkedList<DPointQuadNode<K, V>> stack = new LinkedList<>();
+        private final LinkedList<DBBQuadNode<K, V>> stack = new LinkedList<>();
         private final long thiscount = modcnt.get();
         private final Predicate<IDBoundingBox> selector;
 
-        SelectiveTreeNodeSpliterator(DPointQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
+        SelectiveTreeNodeSpliterator(DBBQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
             stack.add(node);
             this.selector = selector;
         }
@@ -321,10 +322,10 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super DPointQuadNode<K, V>> action) {
+        public boolean tryAdvance(Consumer<? super DBBQuadNode<K, V>> action) {
             assertState();
             if (!stack.isEmpty()) {
-                DPointQuadNode<K, V> node = stack.pop();
+                DBBQuadNode<K, V> node = stack.pop();
                 node.getChildren().stream().filter((cn) -> (cn != null) && selector.test(cn.getBounds())).forEach((cn) -> {
                     stack.add(cn);
                 });
@@ -336,7 +337,7 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         }
 
         @Override
-        public Spliterator<DPointQuadNode<K, V>> trySplit() {
+        public Spliterator<DBBQuadNode<K, V>> trySplit() {
             assertState();
             if (!stack.isEmpty()) {
                 return new SelectiveTreeNodeSpliterator(stack.pop(), selector);
@@ -362,12 +363,12 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         }
     }
 
-    private final class TreeNodeSpliterator implements Spliterator<DPointQuadNode<K, V>> {
+    private final class TreeNodeSpliterator implements Spliterator<DBBQuadNode<K, V>> {
 
-        private final LinkedList<DPointQuadNode<K, V>> stack = new LinkedList<>();
+        private final LinkedList<DBBQuadNode<K, V>> stack = new LinkedList<>();
         private final long thiscount = modcnt.get();
 
-        TreeNodeSpliterator(DPointQuadNode<K, V> node) {
+        TreeNodeSpliterator(DBBQuadNode<K, V> node) {
             stack.add(node);
         }
 
@@ -376,10 +377,10 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super DPointQuadNode<K, V>> action) {
+        public boolean tryAdvance(Consumer<? super DBBQuadNode<K, V>> action) {
             assertState();
             if (!stack.isEmpty()) {
-                DPointQuadNode<K, V> node = stack.pop();
+                DBBQuadNode<K, V> node = stack.pop();
                 node.getChildren().stream().filter((cn) -> (cn != null)).forEach((cn) -> {
                     stack.add(cn);
                 });
@@ -391,7 +392,7 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         }
 
         @Override
-        public Spliterator<DPointQuadNode<K, V>> trySplit() {
+        public Spliterator<DBBQuadNode<K, V>> trySplit() {
             assertState();
             if (!stack.isEmpty()) {
                 return new TreeNodeSpliterator(stack.pop());
@@ -417,14 +418,14 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         }
     }
 
-    private final class NodeIterator implements Iterator<DPointQuadNode<K, V>> {
+    private final class NodeIterator implements Iterator<DBBQuadNode<K, V>> {
 
-        private final Deque<DPointQuadNode<K, V>> stack = new LinkedList<>();
+        private final Deque<DBBQuadNode<K, V>> stack = new LinkedList<>();
         private final Predicate<IDBoundingBox> selector;
         private final long thiscount = modcnt.get();
-        private final List<DPointQuadNode> visited = new LinkedList<>();
+        private final List<DBBQuadNode> visited = new LinkedList<>();
 
-        private NodeIterator(DPointQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
+        private NodeIterator(DBBQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
             assert checkIntegrity();
             if (selector.test(node.getBounds())) {
                 stack.add(node);
@@ -448,11 +449,11 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         }
 
         @Override
-        public DPointQuadNode<K, V> next() {
+        public DBBQuadNode<K, V> next() {
             assertState();
             assert checkIntegrity();
 
-            DPointQuadNode<K, V> next = stack.pop();
+            DBBQuadNode<K, V> next = stack.pop();
 
             next.getChildren().stream().filter((child) -> (child != null && selector.test(child.getBounds()))).forEach((child) -> {
                 assert !visited.contains(child) : "Duplicate visit detected: " + child + " Last seen: " + visited.indexOf(child) + "/" + visited.size() + " Tree integrity: " + checkIntegrity();
@@ -480,7 +481,7 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
 
         private final EntryIterator it;
 
-        KeyIterator(DPointQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
+        KeyIterator(DBBQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
             it = new EntryIterator(node, selector);
         }
 
@@ -507,7 +508,7 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
 
         private final EntryIterator it;
 
-        ValueIterator(DPointQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
+        ValueIterator(DBBQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
             it = new EntryIterator(node, selector);
         }
 
@@ -535,7 +536,7 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         private final NodeIterator it;
         private final LinkedList<Pair<K, V>> values = new LinkedList<>();
 
-        EntryIterator(DPointQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
+        EntryIterator(DBBQuadNode<K, V> node, Predicate<IDBoundingBox> selector) {
             it = new NodeIterator(node, selector);
         }
 
@@ -551,7 +552,7 @@ public class DPointQuadTree<K extends IDPoint, V> implements IDPointQuadTree<K, 
         public boolean hasNext() {
             if (values.isEmpty()) {
                 while (it.hasNext()) {
-                    DPointQuadNode<K, V> node = it.next();
+                    DBBQuadNode<K, V> node = it.next();
                     if (!node.getValues().isEmpty()) {
                         values.addAll(node.getValues());
                         break;

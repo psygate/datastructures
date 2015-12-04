@@ -64,7 +64,7 @@ public class QuadNodeTest {
      */
     @Test
     public void testNode() {
-        QuadNode<IDPoint, Object> node = new QuadNode<>(IDBoundingBox.build(0, 0, 100, 100), new AST());
+        DPointQuadNode<IDPoint, Object> node = new DPointQuadNode<>(IDBoundingBox.build(0, 0, 100, 100), new AST());
         assertTrue(node.isEmpty());
         assertEquals(0, node.size());
         assertFalse(node.hasChildren());

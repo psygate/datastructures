@@ -26,6 +26,7 @@ import com.psygate.datastructures.spatial.d2.trees.SizeableQuadTree;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -40,20 +41,21 @@ import java.util.stream.Collectors;
  *
  * @author psygate (https://github.com/psygate)
  */
-class QuadNode<K extends IDPoint, V> {
+class DBBQuadNode<K extends IDBoundingBox, V> {
 
     private final IDBoundingBox box;
     private final IDBoundingBox[] subboxes;
     private final SizeableQuadTree parent;
     private final List<Pair<K, V>> values;
-    private final ArrayList<QuadNode<K, V>> children = new ArrayList<>(4);
+    private final ArrayList<DBBQuadNode<K, V>> children = new ArrayList<>(4);
+    private boolean isForked = false;
 
-    QuadNode(IDBoundingBox box, SizeableQuadTree parent) {
+    DBBQuadNode(IDBoundingBox box, SizeableQuadTree parent) {
         this.box = box;
         this.parent = parent;
         values = new ArrayList<>(parent.getMaxNodeSize());
         subboxes = subsplit(box);
-        children.addAll(Arrays.asList(new QuadNode[]{null, null, null, null}));
+        children.addAll(Arrays.asList(new DBBQuadNode[]{null, null, null, null}));
     }
 
     private static IDBoundingBox[] subsplit(IDBoundingBox box) {
@@ -64,15 +66,14 @@ class QuadNode<K extends IDPoint, V> {
         return out;
     }
 
-    QuadNode(IDBoundingBox box, SizeableQuadTree parent, Collection<Pair<K, V>> values) {
+    DBBQuadNode(IDBoundingBox box, SizeableQuadTree parent, Collection<Pair<K, V>> values) {
         this(box, parent);
 //        this.values.addAll(values);
 //TODO
     }
 
     int countElements() {
-
-        return values.size() + children.stream().filter((cn) -> cn != null).mapToInt(QuadNode::countElements).sum();
+        return values.size() + children.stream().filter((cn) -> cn != null).mapToInt(DBBQuadNode::countElements).sum();
     }
 
     IDBoundingBox getBounds() {
@@ -89,44 +90,50 @@ class QuadNode<K extends IDPoint, V> {
         assert values.size() >= parent.getMaxNodeSize();
         assert !values.isEmpty();
 
-        values.stream().forEach((p) -> {
-            getChild(p.getKey()).put(p);
-        });
-
+        for (Iterator<Pair<K, V>> it = values.iterator(); it.hasNext();) {
+            Pair<K, V> p = it.next();
+            DBBQuadNode<K, V> child = getChild(p.getKey());
+            if (child != null) {
+                getChild(p.getKey()).put(p);
+                it.remove();
+            }
+        }
+        isForked = true;
+//        assert children.stream().filter((n) -> n != null).mapToInt((v) -> v.getValues().size()).sum() == values.size();
         assert !children.contains(this);
         assert children.stream().filter((n) -> n != null).distinct().count() == children.stream().filter((n) -> n != null).count();
-        values.clear();
-
     }
 
     void put(Pair<K, V> p) {
         assert box.contains(p.getKey()) : "Not contained: " + box + " - " + p.getKey();
-        if (hasChildren()) {
+        if (hasChildren() && Arrays.stream(subboxes).anyMatch((bb) -> bb.contains(p.getKey()))) {
             getChild(p.getKey()).put(p);
         } else {
             values.add(p);
-            if (values.size() > parent.getMaxNodeSize()) {
+            if (values.size() > parent.getMaxNodeSize() && !isForked) {
                 split();
                 assert !children.contains(this);
             }
-            assert values.size() <= parent.getMaxNodeSize() : "Values is larger than max size. " + values.size();
+//            assert values.size() <= parent.getMaxNodeSize() : "Values is larger than max size. " + values.size();
         }
 
     }
 
-    QuadNode<K, V> getChild(K key) {
+    DBBQuadNode<K, V> getChild(K key) {
         final int selected = selectChild(key);
-        assert selected >= 0 && selected < 4 : "Selected node invalid: " + selected;
+
+        if (selected == -1) {
+            return null;
+        }
 
         if (children.get(selected) == null) {
-            children.set(selected, new QuadNode<>(subboxes[selected], parent));
+            children.set(selected, new DBBQuadNode<>(subboxes[selected], parent));
         }
 
         return children.get(selected);
     }
 
     int selectChild(K key) {
-
         assert box.contains(key);
         for (int i = 0; i < subboxes.length; i++) {
             if (subboxes[i].contains(key)) {
@@ -134,17 +141,16 @@ class QuadNode<K extends IDPoint, V> {
             }
         }
 
-        throw new IllegalArgumentException("Selected node index invalid.");
+        return -1;
     }
 
-    List<QuadNode<K, V>> getChildren() {
+    List<DBBQuadNode<K, V>> getChildren() {
 
         assert !children.contains(this);
         return children;
     }
 
     int subtreeSize() {
-
         return values.size() + children.stream().filter((v) -> v != null).mapToInt((v) -> v.subtreeSize()).sum();
     }
 
@@ -164,9 +170,12 @@ class QuadNode<K extends IDPoint, V> {
     }
 
     void clear() {
-
         values.clear();
         children.clear();
+
+        for (int i = 0; i < 4; i++) {
+            children.add(null);
+        }
     }
 
     List<Pair<K, V>> remove(K key) {
@@ -187,8 +196,9 @@ class QuadNode<K extends IDPoint, V> {
         assert subboxes != null;
         assert subboxes.length == 4;
         assert Arrays.stream(subboxes).noneMatch((b) -> b == null);
-        assert values.size() <= parent.getMaxNodeSize();
+//        assert values.size() <= parent.getMaxNodeSize();
         assert values.stream().noneMatch((p) -> p == null);
+        assert values.stream().allMatch((p) -> box.contains(p.getKey()));
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
