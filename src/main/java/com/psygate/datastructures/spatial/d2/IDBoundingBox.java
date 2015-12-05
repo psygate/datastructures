@@ -22,7 +22,7 @@ package com.psygate.datastructures.spatial.d2;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface IDBoundingBox {
+public interface IDBoundingBox extends IDBoundingBoxContainable {
 
     public IDPoint getLower();
 
@@ -76,11 +76,12 @@ public interface IDBoundingBox {
      * @param other Bounding box to check if inside this bounding box.
      * @return True if the other bounding box is inside this bounding box.f
      */
-    default boolean contains(IDBoundingBox other) {
-        return getLower().getX() <= other.getLower().getX()
-                && getUpper().getX() >= other.getUpper().getX()
-                && getLower().getY() <= other.getLower().getY()
-                && getUpper().getY() >= other.getUpper().getY();
+    default boolean contains(IDBoundingBoxContainable other) {
+        return other.isInside(this);
+//        return getLower().getX() <= other.getLower().getX()
+//                && getUpper().getX() >= other.getUpper().getX()
+//                && getLower().getY() <= other.getLower().getY()
+//                && getUpper().getY() >= other.getUpper().getY();
     }
 
     /**
@@ -93,18 +94,13 @@ public interface IDBoundingBox {
     default boolean same(IDBoundingBox other) {
         return getLower().same(other.getLower()) && getUpper().same(other.getUpper());
     }
-
-    /**
-     * Checks if the bounding box contains the provided point. Containing is
-     * defined as the point laying inside or on edges of the bounding box,
-     * without laying on an edge.
-     *
-     * @param point Point to check against.
-     * @return True if the point lies inside the bounding box.
-     */
-    default boolean contains(IDPoint point) {
-        return getLower().getX() <= point.getX() && getUpper().getX() >= point.getX()
-                && getLower().getY() <= point.getY() && getUpper().getY() >= point.getY();
+    
+    @Override
+    default boolean isInside(IDBoundingBox other) {
+        return getLower().getX() >= other.getLower().getX()
+                && getUpper().getX() <= other.getUpper().getX()
+                && getLower().getY() >= other.getLower().getY()
+                && getUpper().getY() <= other.getUpper().getY();
     }
 
     /**

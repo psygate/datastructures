@@ -16,33 +16,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  * 
  */
-package com.psygate.datastructures.spatial.d2.trees;
-
-import com.psygate.datastructures.spatial.d2.IDBoundingBox;
-import com.psygate.datastructures.spatial.d2.IDBoundingBox;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+package com.psygate.datastructures.spatial.d2;
 
 /**
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface MutableSpatialTree<K, V, B> extends SpatialTree<K, V, B> {
+public interface IDBoundingBoxContainable {
 
-    public void put(K key, V value);
-
-    public void put(Map.Entry<K, V> entry);
-
-    public void putAll(Map<K, V> values);
-
-    public void putAll(Collection<? extends Map.Entry<K, V>> values);
-
-    public Collection<V> remove(K key);
-
-    public Collection<V> removeValue(V value);
-
-    public void clear();
+    /**
+     * Checks if this is inside the provided bounding box.
+     *
+     * @param box Bounding box to check against.
+     * @return True if this is inside the box, else false.
+     */
+    boolean isInside(IDBoundingBox box);
 }

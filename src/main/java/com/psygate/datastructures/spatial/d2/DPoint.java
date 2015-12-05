@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  * 
  */
-package com.psygate.datastructures.spatial.d2.trees;
+package com.psygate.datastructures.spatial.d2;
 
 import com.psygate.datastructures.spatial.d2.IDPoint;
 

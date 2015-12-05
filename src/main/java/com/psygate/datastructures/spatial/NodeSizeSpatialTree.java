@@ -16,13 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  * 
  */
-package com.psygate.datastructures.spatial.d2.trees;
+package com.psygate.datastructures.spatial;
 
 /**
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface SizeableQuadTree<K, V, B> extends MutableSpatialTree<K, V, B> {
+public interface NodeSizeSpatialTree<K, V, B> extends SpatialTree<K, V, B> {
 
     public int getMaxNodeSize();
 }

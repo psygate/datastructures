@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * A simple Map.Entry implementation.
  *
  * @author psygate (https://github.com/psygate)
  * @param <K> Key type.
@@ -33,8 +34,18 @@ public class Pair<K, V> implements Map.Entry<K, V> {
     private V value;
 
     public Pair(K key, V value) {
-        this.key = key;
+        this.key = Objects.requireNonNull(key);
         this.value = value;
+    }
+
+    public Pair(Pair<K, V> pair) {
+        this.key = Objects.requireNonNull(pair.key);
+        this.value = pair.value;
+    }
+
+    public Pair(Map.Entry<K, V> entry) {
+        this.key = Objects.requireNonNull(entry.getKey());
+        this.value = entry.getValue();
     }
 
     @Override

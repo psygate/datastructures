@@ -22,7 +22,7 @@ package com.psygate.datastructures.spatial.d2;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface IDPoint {
+public interface IDPoint extends IDBoundingBoxContainable {
 
     public double getX();
 
@@ -51,6 +51,12 @@ public interface IDPoint {
             default:
                 throw new IllegalArgumentException("Unknown axis: " + axis);
         }
+    }
+
+    @Override
+    default boolean isInside(IDBoundingBox box) {
+        return box.getLower().getX() <= getX() && box.getUpper().getX() >= getX()
+                && box.getLower().getY() <= getY() && box.getUpper().getY() >= getY();
     }
 
     /**
