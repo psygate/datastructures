@@ -32,7 +32,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
+ * Default implementation of a simple quad tree node.
  *
+ * @see ImmutableQuadTree
+ * @see QuadTree
  * @author psygate (https://github.com/psygate)
  */
 class QuadNode<K extends IDBoundingBoxContainable, V> {

@@ -21,18 +21,29 @@ package com.psygate.datastructures.spatial.d2;
 import com.psygate.datastructures.spatial.d2.IDPoint;
 
 /**
+ * Implementation of the IDPoint interface.
  *
+ * @see IDPoint
  * @author psygate (https://github.com/psygate)
  */
 public final class DPoint implements IDPoint {
 
     private final double x, y;
-
+    
+    /**
+     *
+     * @param x X coordinate of the new point.
+     * @param y Y coordinate of the new point.
+     */
     public DPoint(final double x, final double y) {
         this.x = x;
         this.y = y;
     }
 
+    /**
+     *
+     * @param point Point to copy, so that point.x == this.x &amp;&amp; point.y == this.y
+     */
     public DPoint(final IDPoint point) {
         this.x = point.getX();
         this.y = point.getY();

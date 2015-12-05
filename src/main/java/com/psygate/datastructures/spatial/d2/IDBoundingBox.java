@@ -19,33 +19,67 @@
 package com.psygate.datastructures.spatial.d2;
 
 /**
+ * Generalised two dimensional axis aligned bounding box interface containing
+ * default implementations for the most common operations.
  *
  * @author psygate (https://github.com/psygate)
  */
 public interface IDBoundingBox extends IDBoundingBoxContainable {
 
+    /**
+     *
+     * @return Lower point of this bounding box. To satisfy the interface, the
+     * lower point must satisfy lower.getX() &lt; upper.getX() &amp;&amp;
+     * lower.getY() &lt; upper.getY();
+     */
     public IDPoint getLower();
 
+    /**
+     *
+     * @return Upper point of this bounding box. To satisfy the interface, the
+     * lower point must satisfy lower.getX() &gt; upper.getX() &amp;&amp;
+     * lower.getY() &gt; upper.getY();
+     */
     public IDPoint getUpper();
 
+    /**
+     *
+     * @return double representing the width of the bounding box.
+     */
     default double getWidth() {
         assert getUpper().getX() >= getLower().getX();
         return getUpper().getX() - getLower().getX();
     }
 
+    /**
+     *
+     * @return double representing the height of the bounding box.
+     */
     default double getHeight() {
         assert getUpper().getY() >= getLower().getY();
         return getUpper().getY() - getLower().getY();
     }
 
+    /**
+     *
+     * @return double representing the center point x axis coordinate.
+     */
     default double getCenterX() {
         return (getUpper().getX() + getLower().getX()) / 2;
     }
 
+    /**
+     *
+     * @return double representing the center point y axis coordinate.
+     */
     default double getCenterY() {
         return (getUpper().getY() + getLower().getY()) / 2;
     }
 
+    /**
+     *
+     * @return IDPoint representing the center point of this bounding box.
+     */
     default IDPoint getCenter() {
         return IDPoint.build(getCenterX(), getCenterY());
     }
@@ -59,10 +93,6 @@ public interface IDBoundingBox extends IDBoundingBoxContainable {
      * @return True if the boxes intersect each other.
      */
     default boolean intersects(IDBoundingBox other) {
-//        return !(getLower().getX() > other.getUpper().getX()
-//                || getUpper().getX() < other.getLower().getX()
-//                || getLower().getY() > other.getUpper().getY()
-//                || getUpper().getY() < other.getUpper().getY());
         return (Math.abs(getCenterX() - other.getCenterX()) * 2 < (getWidth() + other.getWidth()))
                 && (Math.abs(getCenterY() - other.getCenterY()) * 2 < (getHeight() + other.getHeight()));
     }
@@ -78,10 +108,6 @@ public interface IDBoundingBox extends IDBoundingBoxContainable {
      */
     default boolean contains(IDBoundingBoxContainable other) {
         return other.isInside(this);
-//        return getLower().getX() <= other.getLower().getX()
-//                && getUpper().getX() >= other.getUpper().getX()
-//                && getLower().getY() <= other.getLower().getY()
-//                && getUpper().getY() >= other.getUpper().getY();
     }
 
     /**
@@ -94,7 +120,7 @@ public interface IDBoundingBox extends IDBoundingBoxContainable {
     default boolean same(IDBoundingBox other) {
         return getLower().same(other.getLower()) && getUpper().same(other.getUpper());
     }
-    
+
     @Override
     default boolean isInside(IDBoundingBox other) {
         return getLower().getX() >= other.getLower().getX()
@@ -172,9 +198,16 @@ public interface IDBoundingBox extends IDBoundingBoxContainable {
         };
     }
 
-    public static IDBoundingBox build(final IDPoint loweri, final IDPoint upperi) {
-        final IDPoint lower = IDPoint.build(loweri);
-        final IDPoint upper = IDPoint.build(upperi);
+    /**
+     *
+     * @param lowerpoint Lower point of the new bounding box.
+     * @param upperpoint Upper point of the new bounding box.
+     * @return New bounding box spanning from the lower point to the upper
+     * point.
+     */
+    public static IDBoundingBox build(final IDPoint lowerpoint, final IDPoint upperpoint) {
+        final IDPoint lower = IDPoint.build(lowerpoint);
+        final IDPoint upper = IDPoint.build(upperpoint);
         return new IDBoundingBox() {
             @Override
             public IDPoint getLower() {
@@ -188,11 +221,25 @@ public interface IDBoundingBox extends IDBoundingBoxContainable {
         };
     }
 
+    /**
+     *
+     * @param box Box to copy.
+     * @return An equal new bounding box.
+     */
     public static IDBoundingBox build(final IDBoundingBox box) {
         return build(box.getLower(), box.getUpper());
     }
 
-    public static IDBoundingBox build(final double lx, final double ly, final double ux, final double uz) {
-        return build(IDPoint.build(lx, ly), IDPoint.build(ux, uz));
+    /**
+     *
+     * @param lx Lower point x coordinate.
+     * @param ly Lower point y coordinate.
+     * @param ux Upper point x coordinate.
+     * @param uy Upper point y coordinate.
+     * @return Bounding box with IDPoint(lx,ly) as lower point and
+     * IDPoint(ux,uy) as upper point.
+     */
+    public static IDBoundingBox build(final double lx, final double ly, final double ux, final double uy) {
+        return build(IDPoint.build(lx, ly), IDPoint.build(ux, uy));
     }
 }

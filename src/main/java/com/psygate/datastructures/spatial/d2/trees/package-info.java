@@ -16,23 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  * 
  */
-package com.psygate.datastructures.spatial;
-
 /**
- * Interface to specify that the implementing tree has an internal node size
- * that can be queried.
+ * Package containing implementations for mutable and immutable two dimensional spatial trees.
  *
  * @author psygate (https://github.com/psygate)
- * @param <K> Key type for the spatial tree.
- * @param <V> Value type for the spatial tree.
- * @param <B> Area type for the spatial tree.
  */
-public interface NodeSizeSpatialTree<K, V, B> extends SpatialTree<K, V, B> {
-
-    /**
-     *
-     * @return Maximum internal node size (maximum number of values contained
-     * inside the node).
-     */
-    public int getMaxNodeSize();
-}
+package com.psygate.datastructures.spatial.d2.trees;

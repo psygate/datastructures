@@ -33,19 +33,30 @@ public class Pair<K, V> implements Map.Entry<K, V> {
     private final K key;
     private V value;
 
+    /**
+     *
+     * @param key Key for the new key -&gt; value association.
+     * @param value Value for the new key -&gt; value association.
+     */
     public Pair(K key, V value) {
         this.key = Objects.requireNonNull(key);
         this.value = value;
     }
 
+    /**
+     *
+     * @param pair Copies key and value from the provided pair.
+     */
     public Pair(Pair<K, V> pair) {
-        this.key = Objects.requireNonNull(pair.key);
-        this.value = pair.value;
+        this(Objects.requireNonNull(pair.key), pair.getValue());
     }
 
+    /**
+     *
+     * @param entry Copies key and value from the provided entry.
+     */
     public Pair(Map.Entry<K, V> entry) {
-        this.key = Objects.requireNonNull(entry.getKey());
-        this.value = entry.getValue();
+        this(Objects.requireNonNull(entry.getKey()), entry.getValue());
     }
 
     @Override

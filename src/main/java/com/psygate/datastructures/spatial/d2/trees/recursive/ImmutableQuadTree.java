@@ -42,34 +42,70 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
+ * Immutable quad tree implementation. This tree cannot be modified after
+ * construction and is safe to traverse concurrently.
  *
  * @author psygate (https://github.com/psygate)
+ * @param <K> Key type.
+ * @param <V> Value type.
  */
 public class ImmutableQuadTree<K extends IDBoundingBoxContainable, V> implements NodeSizeSpatialTree<K, V, IDBoundingBox>, BoundingBoxTree<K, V, IDBoundingBox> {
 
     private final QuadNode<K, V> root;
     int size = 0;
 
+    /**
+     *
+     * @param bounds Bounds of the new tree.
+     * @param maxNodeSize Maximum node size of the new tree.
+     */
     ImmutableQuadTree(IDBoundingBox bounds, int maxNodeSize) {
         this.root = new QuadNode<>(new DBoundingBox(bounds), maxNodeSize);
     }
 
+    /**
+     *
+     * @param tree SpatialTree to copy.
+     */
     public ImmutableQuadTree(NodeSizeSpatialTree<K, V, IDBoundingBox> tree) {
         this(tree, tree.getMaxNodeSize());
     }
 
+    /**
+     *
+     * @param tree SpatialTree to copy.
+     * @param maxNodeSize Maximum node size of the new tree.
+     */
     public ImmutableQuadTree(SpatialTree<K, V, IDBoundingBox> tree, int maxNodeSize) {
         this(tree.entryStream(), tree.getBounds(), maxNodeSize);
     }
 
+    /**
+     *
+     * @param values Values to insert upon construction.
+     * @param bounds Bounds of the new tree.
+     * @param maxNodeSize Maximum node size of the new tree.
+     */
     public ImmutableQuadTree(Map<K, V> values, IDBoundingBox bounds, int maxNodeSize) {
         this(values.entrySet(), bounds, maxNodeSize);
     }
 
+    /**
+     *
+     * @param values Values to insert upon construction.
+     * @param bounds Bounds of the new tree.
+     * @param maxNodeSize Maximum node size of the new tree.
+     */
     public ImmutableQuadTree(Collection<? extends Map.Entry<K, V>> values, IDBoundingBox bounds, int maxNodeSize) {
         this(values.stream(), bounds, maxNodeSize);
     }
 
+    /**
+     *
+     * @param values Values to insert upon construction.
+     * @param bounds Bounds of the new tree.
+     * @param maxNodeSize Maximum node size of the new tree.
+     */
     ImmutableQuadTree(Stream<? extends Map.Entry<K, V>> values, IDBoundingBox bounds, int maxNodeSize) {
         this.root = new QuadNode<>(new DBoundingBox(bounds), maxNodeSize);
         values.forEach((en) -> {
@@ -100,22 +136,45 @@ public class ImmutableQuadTree<K extends IDBoundingBoxContainable, V> implements
                 .flatMap((n) -> n.getValues().stream());
     }
 
+    /**
+     *
+     * @return Stream iterating over all nodes in the contained tree.
+     */
     Stream<QuadNode<K, V>> nodeStream() {
         return selectiveNodeStream(root, (IDBoundingBox b) -> true);
     }
 
+    /**
+     *
+     * @return Stream iterating over all nodes that satisfy
+     * Predicate.test(node.getBounds()) == true.
+     */
     Stream<QuadNode<K, V>> selectiveNodeStream(QuadNode<K, V> node, Predicate<IDBoundingBox> pred) {
         return StreamSupport.stream(new NodeSpliterator(root, pred), false);
     }
 
+    /**
+     *
+     * @return Spliterator iterating over all nodes that satisfy
+     * Predicate.test(node.getBounds()) == true.
+     */
     Spliterator<QuadNode<K, V>> getSpliterator(QuadNode<K, V> node, Predicate<IDBoundingBox> pred) {
         return new NodeSpliterator(node, pred);
     }
 
+    /**
+     *
+     * @return Iterator iterating over all nodes in the contained tree.
+     */
     Iterator<QuadNode<K, V>> nodeIterator() {
         return nodeStream().iterator();
     }
 
+    /**
+     *
+     * @return Iterator iterating over all nodes that satisfy
+     * Predicate.test(node.getBounds()) == true.
+     */
     Iterator<QuadNode<K, V>> nodeIterator(Predicate<IDBoundingBox> pred) {
         return selectiveNodeStream(root, pred).iterator();
     }
@@ -125,10 +184,17 @@ public class ImmutableQuadTree<K extends IDBoundingBoxContainable, V> implements
         return root.getMaxNodeSize();
     }
 
+    /**
+     *
+     * @return Root node if this tree. Cannot be null.
+     */
     QuadNode<K, V> getRoot() {
         return root;
     }
 
+    /**
+     * Spliterator iterating over all nodes of the tree.
+     */
     final class NodeSpliterator implements Spliterator<QuadNode<K, V>> {
 
         private final Queue<QuadNode<K, V>> stack = new LinkedList<>();

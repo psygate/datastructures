@@ -19,9 +19,19 @@
 package com.psygate.datastructures.spatial.d2;
 
 /**
+ * Enumeration representing all available two dimensional axis in a euclidian
+ * space.
  *
  * @author psygate (https://github.com/psygate)
  */
 public enum Axis {
-    X, Y;
+
+    /**
+     * Constant representing the euclidian x axis.
+     */
+    X,
+    /**
+     * Constant representing the euclidian y axis.
+     */
+    Y;
 }

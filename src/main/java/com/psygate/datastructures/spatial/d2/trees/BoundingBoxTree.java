@@ -28,6 +28,17 @@ import com.psygate.datastructures.spatial.d2.IDBoundingBoxContainable;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+/**
+ * Generalised interface implementing a two dimensional BoundingBox tree.
+ * Provides useful default methods for two dimensional trees that use bounding
+ * boxes.
+ *
+ * @author psygate (https://github.com/psygate)
+ *
+ * @param <K> Key type for the spatial tree.
+ * @param <V> Value type for the spatial tree.
+ * @param <B> Area type for the spatial tree.
+ */
 public interface BoundingBoxTree<K extends IDBoundingBoxContainable, V, B extends IDBoundingBox> extends SpatialTree<K, V, B> {
 
     @Override
@@ -45,7 +56,7 @@ public interface BoundingBoxTree<K extends IDBoundingBoxContainable, V, B extend
     }
 
     @Override
-    default boolean containsValue(V value, Predicate<IDBoundingBox> pred) {
+    default boolean containsValue(V value, Predicate<B> pred) {
         return selectiveValueStream(pred)
                 .anyMatch((candidate)
                         -> Objects.equals(candidate, value));

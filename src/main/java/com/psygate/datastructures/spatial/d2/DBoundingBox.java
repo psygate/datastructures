@@ -24,29 +24,52 @@ import com.psygate.datastructures.spatial.d2.IDPoint;
 import java.util.Objects;
 
 /**
+ * Implementation of the IDBoundingBox interface.
  *
+ * @see IDBoundingBox
  * @author psygate (https://github.com/psygate)
  */
 public final class DBoundingBox implements IDBoundingBox {
 
     private final DPoint lower, upper, center;
 
+    /**
+     *
+     * @param lower Lower point of the new bounding box.
+     * @param upper Upper point of the new bounding box.
+     */
     public DBoundingBox(DPoint lower, DPoint upper) {
         this.lower = lower;
         this.upper = upper;
         this.center = new DPoint((lower.getX() + upper.getX()) / 2, (lower.getY() + upper.getY()) / 2);
     }
 
+    /**
+     *
+     * @param lower Lower point of the new bounding box.
+     * @param upper Upper point of the new bounding box.
+     */
     public DBoundingBox(IDPoint lower, IDPoint upper) {
         this(new DPoint(lower), new DPoint(upper));
     }
 
+    /**
+     *
+     * @param box Box to copy so that this bounding box equals box.
+     */
     public DBoundingBox(IDBoundingBox box) {
         this(new DPoint(box.getLower()), new DPoint(box.getUpper()));
     }
 
-    public DBoundingBox(final double lx, final double ly, final double ux, final double uz) {
-        this(new DPoint(lx, ly), new DPoint(ux, uz));
+    /**
+     *
+     * @param lx Lower point x coordinate.
+     * @param ly Lower point y coordinate.
+     * @param ux Upper point x coordinate.
+     * @param uy Upper point y coordinate.
+     */
+    public DBoundingBox(final double lx, final double ly, final double ux, final double uy) {
+        this(new DPoint(lx, ly), new DPoint(ux, uy));
     }
 
     @Override
@@ -92,7 +115,6 @@ public final class DBoundingBox implements IDBoundingBox {
     public DBoundingBox[] splitMidY() {
         final double lx = getLower().getX();
         final double ly = getLower().getY();
-//        final double cx = getCenterX();
         final double cy = getCenterY();
         final double ux = getUpper().getX();
         final double uy = getUpper().getY();

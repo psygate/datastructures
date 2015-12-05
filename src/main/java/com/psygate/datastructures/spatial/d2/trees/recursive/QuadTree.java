@@ -45,19 +45,35 @@ import java.util.stream.Stream;
 /**
  *
  * @author psygate (https://github.com/psygate)
+ * @param <K> Key type.
+ * @param <V> Value type.
  */
 public class QuadTree<K extends IDBoundingBoxContainable, V> extends ImmutableQuadTree<K, V> implements MutableSpatialTree<K, V, IDBoundingBox> {
 
     private final AtomicLong modcnt = new AtomicLong(Long.MIN_VALUE);
 
+    /**
+     *
+     * @param tree Tree to copy.
+     */
     public QuadTree(NodeSizeSpatialTree<K, V, IDBoundingBox> tree) {
         super(tree);
     }
 
+    /**
+     *
+     * @param tree Tree to copy.
+     * @param maxNodeSize Maximum node size.
+     */
     public QuadTree(SpatialTree<K, V, IDBoundingBox> tree, int maxNodeSize) {
         super(tree, maxNodeSize);
     }
 
+    /**
+     *
+     * @param bounds Bounds of the new quad tree.
+     * @param maxNodeSize Maximum node size.
+     */
     public QuadTree(IDBoundingBox bounds, int maxNodeSize) {
         super(bounds, maxNodeSize);
     }
@@ -71,27 +87,7 @@ public class QuadTree<K extends IDBoundingBoxContainable, V> extends ImmutableQu
         getRoot().put(pair);
         size++;
     }
-
-    @Override
-    public void put(Map.Entry<K, V> entry) {
-        put(new Pair<>(entry));
-    }
-
-    @Override
-    public void put(K key, V value) {
-        put(new Pair<>(key, value));
-    }
-
-    @Override
-    public void putAll(Map<K, V> values) {
-        putAll(values.entrySet());
-    }
-
-    @Override
-    public void putAll(Collection<? extends Map.Entry<K, V>> values) {
-        values.stream().forEach((entry) -> put(entry));
-    }
-
+    
     @Override
     public Collection<V> remove(K key) {
         if (!getRoot().getBounds().contains(Objects.requireNonNull(key))) {
@@ -101,13 +97,6 @@ public class QuadTree<K extends IDBoundingBoxContainable, V> extends ImmutableQu
             size -= list.size();
             return list.stream().map((p) -> p.getValue()).collect(Collectors.toList());
         }
-    }
-
-    @Override
-    public Collection<V> remove(Collection<K> keys) {
-        Collection<V> col = keys.stream().flatMap((k) -> remove(k).stream()).collect(Collectors.toList());
-        size -= col.size();
-        return col;
     }
 
     @Override
@@ -128,23 +117,6 @@ public class QuadTree<K extends IDBoundingBoxContainable, V> extends ImmutableQu
 
         size -= col.size();
         return col;
-    }
-
-    @Override
-    public Collection<V> removeValue(Collection<V> value, Predicate<IDBoundingBox> hint) {
-        return value.stream().flatMap((v) -> removeValue(v).stream()).collect(Collectors.toList());
-    }
-
-    @Override
-    public Collection<V> removeValue(Collection<V> value) {
-        return value.stream().flatMap((v) -> removeValue(value).stream()).collect(Collectors.toList());
-    }
-
-    @Override
-    public Collection<V> removeValue(V value) {
-        return getRoot().subtreeRemoveValue(value, (IDBoundingBox t) -> true).stream()
-                .map(Pair::getValue)
-                .collect(Collectors.toList());
     }
 
     @Override
