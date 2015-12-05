@@ -33,7 +33,15 @@ public interface IDBoundingBox extends IDBoundingBoxContainable, Dimensioned {
      * lower point must satisfy lower.getX() &lt; upper.getX() &amp;&amp;
      * lower.getY() &lt; upper.getY();
      */
-    public IDPoint getLower(int axisindex);
+    default IDPoint getLower(int axisindex) {
+        return getLower()[axisindex];
+    }
+
+    /**
+     *
+     * @return Array containing all lower points of this bounding box.
+     */
+    public IDPoint[] getLower();
 
     /**
      * @param axisindex Axis of the lower point.
@@ -41,7 +49,15 @@ public interface IDBoundingBox extends IDBoundingBoxContainable, Dimensioned {
      * lower point must satisfy lower.getX() &gt; upper.getX() &amp;&amp;
      * lower.getY() &gt; upper.getY();
      */
-    public IDPoint getUpper(int axisindex);
+    default IDPoint getUpper(int axisindex) {
+        return getUpper()[axisindex];
+    }
+
+    /**
+     *
+     * @return Array containing all upper points of this bounding box.
+     */
+    public IDPoint[] getUpper();
 
     default double length(int axisindex) {
         return getUpper(axisindex).get(axisindex) - getLower(axisindex).get(axisindex);
@@ -132,8 +148,14 @@ public interface IDBoundingBox extends IDBoundingBoxContainable, Dimensioned {
         if (other.getDimensions() != this.getDimensions()) {
             throw new IllegalArgumentException("Dimension mismatch.");
         }
-        
-        
+
+        for (int i = 0; i < getDimensions(); i++) {
+            if (!(getLower(i).get(i) >= other.getLower(i).get(i)) || !(getUpper(i).get(i) <= other.getUpper(i).get(i))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -144,87 +166,66 @@ public interface IDBoundingBox extends IDBoundingBoxContainable, Dimensioned {
      * @return Merged bounding box.
      */
     default IDBoundingBox merge(IDBoundingBox other) {
-        return build(
-                Math.min(other.getLower().getX(), getLower().getX()),
-                Math.min(other.getLower().getY(), getLower().getY()),
-                Math.max(other.getUpper().getX(), getUpper().getX()),
-                Math.max(other.getUpper().getY(), getUpper().getY())
-        );
-    }
 
-    /**
-     * This method splits the bounding box in half on the x axis.<br>
-     *
-     * @return Array containing two bounding boxes. The bounding box at index 0
-     * represents the lower part of the split, the bounding box at index 1
-     * represents the upper part of the split.<br>
-     * This method must be overwritten if a lot of splits are performed, as only
-     * referential bounding boxes are generated the traversal of the split chain
-     * can be very long, leading to slow operation. Additionally, all preceding
-     * bounding boxes are not eligible for garbage collection, as long as a
-     * split version of them is still reachable. If the call stack becomes too
-     * big, a {@link java.lang.StackOverflowError} might be thrown.
-     */
-    default IDBoundingBox[] splitMidX() {
-        final double lx = getLower().getX();
-        final double ly = getLower().getY();
-        final double cx = getCenterX();
-        final double ux = getUpper().getX();
-        final double uy = getUpper().getY();
+        if (other.getDimensions() != this.getDimensions()) {
+            throw new IllegalArgumentException("Dimension mismatch.");
+        }
 
-        return new IDBoundingBox[]{
-            build(lx, ly, cx, uy),
-            build(cx, ly, ux, uy)
-        };
-    }
+        IDPoint[] lowers = new IDPoint[other.getDimensions()];
+        IDPoint[] uppers = new IDPoint[other.getDimensions()];
 
-    /**
-     * This method splits the bounding box in half on the y axis.<br>
-     *
-     * @return Array containing two bounding boxes. The bounding box at index 0
-     * represents the lower part of the split, the bounding box at index 1
-     * represents the upper part of the split.<br>
-     * This method must be overwritten if a lot of splits are performed, as only
-     * referential bounding boxes are generated the traversal of the split chain
-     * can be very long, leading to slow operation. Additionally, all preceding
-     * bounding boxes are not eligible for garbage collection, as long as a
-     * split version of them is still reachable. If the call stack becomes too
-     * big, a {@link java.lang.StackOverflowError} might be thrown.
-     */
-    default IDBoundingBox[] splitMidY() {
-        final double lx = getLower().getX();
-        final double ly = getLower().getY();
-//        final double cx = getCenterX();
-        final double cy = getCenterY();
-        final double ux = getUpper().getX();
-        final double uy = getUpper().getY();
+        for (int i = 0; i < getDimensions(); i++) {
+            double[] lowercoords = new double[getDimensions()];
+            double[] uppercoords = new double[getDimensions()];
 
-        return new IDBoundingBox[]{
-            build(lx, ly, ux, cy),
-            build(lx, cy, ux, uy)
-        };
+            for (int j = 0; j < getDimensions(); j++) {
+                lowercoords[i] = Math.min(getLower(i).get(j), other.getLower(i).get(j));
+                uppercoords[i] = Math.max(getUpper(i).get(j), other.getUpper(i).get(j));
+            }
+
+            lowers[i] = IDPoint.build(lowercoords);
+            uppers[i] = IDPoint.build(uppercoords);
+        }
+
+        return build(lowers, uppers);
     }
 
     /**
      *
-     * @param lowerpoint Lower point of the new bounding box.
-     * @param upperpoint Upper point of the new bounding box.
+     * @param lowerpoints Lower points of the new bounding box.
+     * @param upperpoints Upper points of the new bounding box.
      * @return New bounding box spanning from the lower point to the upper
      * point.
      */
-    public static IDBoundingBox build(final IDPoint lowerpoint, final IDPoint upperpoint) {
-        final IDPoint lower = IDPoint.build(lowerpoint);
-        final IDPoint upper = IDPoint.build(upperpoint);
+    public static IDBoundingBox build(final IDPoint[] lowerpoints, final IDPoint[] upperpoints) {
+        if (lowerpoints.length != upperpoints.length) {
+            throw new IllegalArgumentException("Dimension mismatch.");
+        }
+
+        IDPoint[] lowers = new IDPoint[lowerpoints.length];
+        IDPoint[] uppers = new IDPoint[upperpoints.length];
+
+        for (int i = 0; i < lowerpoints.length; i++) {
+            lowers[i] = IDPoint.build(lowerpoints[i]);
+            uppers[i] = IDPoint.build(upperpoints[i]);
+        }
+
         return new IDBoundingBox() {
             @Override
-            public IDPoint getLower() {
-                return lower;
+            public IDPoint[] getLower() {
+                return lowers;
             }
 
             @Override
-            public IDPoint getUpper() {
-                return upper;
+            public IDPoint[] getUpper() {
+                return uppers;
             }
+
+            @Override
+            public int getDimensions() {
+                return lowers.length;
+            }
+
         };
     }
 
@@ -235,18 +236,5 @@ public interface IDBoundingBox extends IDBoundingBoxContainable, Dimensioned {
      */
     public static IDBoundingBox build(final IDBoundingBox box) {
         return build(box.getLower(), box.getUpper());
-    }
-
-    /**
-     *
-     * @param lx Lower point x coordinate.
-     * @param ly Lower point y coordinate.
-     * @param ux Upper point x coordinate.
-     * @param uy Upper point y coordinate.
-     * @return Bounding box with IDPoint(lx,ly) as lower point and
-     * IDPoint(ux,uy) as upper point.
-     */
-    public static IDBoundingBox build(final double lx, final double ly, final double ux, final double uy) {
-        return build(IDPoint.build(lx, ly), IDPoint.build(ux, uy));
     }
 }

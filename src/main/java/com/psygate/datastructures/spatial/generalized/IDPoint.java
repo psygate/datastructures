@@ -32,7 +32,15 @@ public interface IDPoint extends IDBoundingBoxContainable, Dimensioned {
      * &gt;=0 and &lt;getDimensions()
      * @return Coordinate of the point on the provided axis.
      */
-    public double get(int axisindex);
+    default double get(int axisindex) {
+        return get()[axisindex];
+    }
+
+    /**
+     *
+     * @return Array representing all coordinates on all axis for this point.
+     */
+    public double[] get();
 
     /**
      *
@@ -114,8 +122,8 @@ public interface IDPoint extends IDBoundingBoxContainable, Dimensioned {
 
         return new IDPoint() {
             @Override
-            public double get(int axisindex) {
-                return values[axisindex];
+            public double[] get() {
+                return values;
             }
 
             @Override
@@ -132,9 +140,10 @@ public interface IDPoint extends IDBoundingBoxContainable, Dimensioned {
      */
     public static IDPoint build(final double... values) {
         return new IDPoint() {
+
             @Override
-            public double get(int axisindex) {
-                return values[axisindex];
+            public double[] get() {
+                return values;
             }
 
             @Override
