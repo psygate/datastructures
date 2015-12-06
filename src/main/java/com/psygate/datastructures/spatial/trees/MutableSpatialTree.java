@@ -20,11 +20,9 @@ package com.psygate.datastructures.spatial.trees;
 
 import com.psygate.datastructures.util.Pair;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Interface specifying methods to alter a mutable spatial tree. Implementing

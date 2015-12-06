@@ -18,14 +18,11 @@
  */
 package com.psygate.datastructures.spatial.trees;
 
-import com.psygate.datastructures.spatial.ID2Orderable;
 import com.psygate.datastructures.spatial.trees.SpatialTree;
 /**
  *
  * @author psygate (https://github.com/psygate)
  */
-import java.util.Objects;
-import java.util.function.Predicate;
 
 /**
  * Generalised interface implementing a two dimensional BoundingBox tree.
@@ -39,7 +36,7 @@ import java.util.function.Predicate;
  * @param <Q> Area type for the spatial tree.
  * @param <L> Bound type for the spatial tree.
  */
-public interface BoundedSpatialTree<K extends ID2Orderable, V, Q, L> extends SpatialTree<K, V, Q> {
+public interface BoundedSpatialTree<K, V, Q, L> extends SpatialTree<K, V, Q> {
 
     public L getBounds();
 

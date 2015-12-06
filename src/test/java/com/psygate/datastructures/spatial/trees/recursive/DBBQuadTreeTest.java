@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.After;
@@ -44,6 +42,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.psygate.datastructures.spatial.ID2BoundingBox;
+import com.psygate.datastructures.spatial.generalized.IDBoundingBox;
+import java.util.stream.BaseStream;
 
 /**
  *
@@ -90,12 +90,12 @@ public class DBBQuadTreeTest {
     @Test
     public void testEnvelopes() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        assertTrue(toKeys(getPoints(batchsize)).stream().allMatch((p) -> tree.envelopes(p)));
+        assertTrue(toKeys(getPoints(batchsize, tree.getBounds())).stream().allMatch((p) -> tree.envelopes(p)));
         final QuadTree<ID2BoundingBox, D2Point> tree2 = newTree(4, 4, 5, 5);
-        assertTrue(toKeys(getPoints(batchsize)).stream().noneMatch((p) -> tree2.envelopes(p)));
-        assertTrue(toKeys(getPoints(batchsize)).stream().noneMatch((p) -> tree2.envelopes(p)));
-        assertTrue(toKeys(getPoints(batchsize)).stream().noneMatch((p) -> tree2.envelopes(p)));
-        assertTrue(toKeys(getPoints(batchsize)).stream().noneMatch((p) -> tree2.envelopes(p)));
+        assertTrue(toKeys(getPoints(batchsize, tree.getBounds())).stream().noneMatch((p) -> tree2.envelopes(p)));
+        assertTrue(toKeys(getPoints(batchsize, tree.getBounds())).stream().noneMatch((p) -> tree2.envelopes(p)));
+        assertTrue(toKeys(getPoints(batchsize, tree.getBounds())).stream().noneMatch((p) -> tree2.envelopes(p)));
+        assertTrue(toKeys(getPoints(batchsize, tree.getBounds())).stream().noneMatch((p) -> tree2.envelopes(p)));
     }
 
     /**
@@ -105,10 +105,10 @@ public class DBBQuadTreeTest {
     public void testPutRemove() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
 
-        List<Pair<ID2BoundingBox, D2Point>> batch1 = getPoints(batchsize);
-        List<Pair<ID2BoundingBox, D2Point>> batch2 = getPoints(batchsize);
-        List<Pair<ID2BoundingBox, D2Point>> batch3 = getPoints(batchsize);
-        List<Pair<ID2BoundingBox, D2Point>> batch4 = getPoints(batchsize);
+        List<Pair<ID2BoundingBox, D2Point>> batch1 = getPoints(batchsize, tree.getBounds());
+        List<Pair<ID2BoundingBox, D2Point>> batch2 = getPoints(batchsize, tree.getBounds());
+        List<Pair<ID2BoundingBox, D2Point>> batch3 = getPoints(batchsize, tree.getBounds());
+        List<Pair<ID2BoundingBox, D2Point>> batch4 = getPoints(batchsize, tree.getBounds());
         LinkedList<Pair<ID2BoundingBox, D2Point>> merged = new LinkedList<>();
         Stream.concat(batch1.stream(), Stream.concat(batch2.stream(), Stream.concat(batch3.stream(), batch4.stream())))
                 .forEach((p) -> merged.add(p));
@@ -184,7 +184,7 @@ public class DBBQuadTreeTest {
     public void testKeyStream() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
 
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         final Set<ID2BoundingBox> keylist = new HashSet<>(toKeys(baselist));
         tree.putAll(baselist);
         assertTrue(tree.keyStream().allMatch((p) -> keylist.contains(p)));
@@ -196,7 +196,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testValueStream() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         final Set<D2Point> values = new HashSet<>(toValues(baselist));
         tree.putAll(baselist);
         assertTrue(tree.valueStream().allMatch((p) -> values.contains(p)));
@@ -208,7 +208,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testEntryStream() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         tree.putAll(baselist);
         assertTrue(tree.entryStream().allMatch(baselist::contains));
     }
@@ -218,14 +218,16 @@ public class DBBQuadTreeTest {
      */
     @Test
     public void testSelectiveKeyStream() {
+        final ID2BoundingBox bb = new D2BoundingBox(0, 0, 0.25, 0.25);
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize);
-        final Set<ID2BoundingBox> keylist = new HashSet(toKeys(baselist).parallelStream().filter(((p) -> new D2BoundingBox(0, 0, 0.25, 0.25).contains(p))).collect(Collectors.toList()));
+        final List<Pair<ID2BoundingBox, D2Point>> baselist = new LinkedList(getPoints(batchsize, tree.getBounds()));
+        baselist.addAll(getPoints(batchsize, bb));
+        final Set<ID2BoundingBox> keylist = new HashSet(toKeys(baselist).parallelStream().filter(((p) -> bb.contains(p))).collect(Collectors.toList()));
         assertFalse(keylist.isEmpty());
         tree.putAll(baselist);
 
         List<ID2BoundingBox> selectedKeys = tree
-                .selectiveKeyStream((box) -> box.intersects(new D2BoundingBox(0, 0, 0.25, 0.25)))
+                .selectiveKeyStream((box) -> box.intersects(bb))
                 .filter((p) -> new D2BoundingBox(0, 0, 0.25, 0.25).contains(p))
                 .collect(Collectors.toList());
 
@@ -239,7 +241,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testSelectiveValueStream() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize);
+        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize, tree.getBounds());
         final Set<ID2BoundingBox> keylist = new HashSet(toKeys(baselist));
         final Set<D2Point> valuelist = new HashSet<>(toValues(baselist));
 
@@ -260,7 +262,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testSelectiveEntryStream() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize);
+        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize, tree.getBounds());
         final Set<ID2BoundingBox> keylist = new HashSet(toKeys(baselist));
         final Set<Map.Entry<ID2BoundingBox, D2Point>> entrylist = new HashSet<>(baselist);
 
@@ -278,7 +280,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testNodeIterator() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         tree.putAll(baselist);
         final Set<QuadNode<ID2BoundingBox, D2Point>> visited = new HashSet<>();
         int size = 0;
@@ -299,7 +301,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testKeyIterator() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize);
+        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize, tree.getBounds());
         final Set<ID2BoundingBox> keylist = new HashSet(toKeys(baselist));
 
         tree.putAll(baselist);
@@ -319,7 +321,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testValueIterator() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize);
+        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize, tree.getBounds());
         final Set<D2Point> valueslist = new HashSet(toValues(baselist));
         tree.putAll(baselist);
         int size = 0;
@@ -338,7 +340,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testEntryIterator() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize);
+        final List<Pair<ID2BoundingBox, D2Point>> baselist = getPoints(batchsize, tree.getBounds());
         final Set<Map.Entry<ID2BoundingBox, D2Point>> entrylist = new HashSet(baselist);
 
         tree.putAll(entrylist);
@@ -360,9 +362,11 @@ public class DBBQuadTreeTest {
     public void testSelectiveKeyIterator() {
         final D2BoundingBox box = new D2BoundingBox(0, 0, 0.25, 0.25);
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
-        final Set<ID2BoundingBox> keylist = new HashSet(baselist.stream().map((p) -> p.getKey()).filter((p) -> box.contains(p)).collect(Collectors.toList()));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
+        baselist.addAll(getPoints(batchsize, box));
 
+        final Set<ID2BoundingBox> keylist = new HashSet(baselist.stream().map((p) -> p.getKey()).filter((p) -> box.contains(p)).collect(Collectors.toList()));
+        assertFalse(keylist.isEmpty());
         tree.putAll(baselist);
         assertFalse(tree.isEmpty());
         assertEquals(baselist.size(), tree.size());
@@ -375,9 +379,8 @@ public class DBBQuadTreeTest {
                 size++;
             }
         }
-
-        assertEquals(keylist.size(), size);
         assertTrue(size > 0);
+        assertEquals("keys found: " + size + " of " + keylist.size(), keylist.size(), size);
     }
 
     /**
@@ -387,7 +390,7 @@ public class DBBQuadTreeTest {
     public void testSelectiveValueIterator() {
         final D2BoundingBox box = new D2BoundingBox(0, 0, 0.25, 0.25);
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         final List<D2Point> values = toValues(baselist);
 
         tree.putAll(baselist);
@@ -408,7 +411,7 @@ public class DBBQuadTreeTest {
     public void testSelectiveNodeIterator() {
         final D2BoundingBox box = new D2BoundingBox(0, 0, 0.25, 0.25);
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
 
         tree.putAll(baselist);
         assertFalse(tree.isEmpty());
@@ -428,7 +431,7 @@ public class DBBQuadTreeTest {
     public void testSelectiveEntryIterator() {
         final D2BoundingBox box = new D2BoundingBox(0, 0, 0.25, 0.25);
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         final Set<Map.Entry<D2Point, D2Point>> entrylist = new HashSet(baselist.stream().filter((p) -> box.contains(p.getKey())).collect(Collectors.toList()));
 
         final Set<Map.Entry<ID2BoundingBox, D2Point>> found = new HashSet<>();
@@ -457,7 +460,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testKeys() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         tree.putAll(baselist);
 
         assertEquals(baselist.size(), tree.keys().size());
@@ -471,7 +474,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testValues() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         tree.putAll(baselist);
 
         assertEquals(baselist.size(), tree.values().size());
@@ -485,7 +488,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testEntries() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         tree.putAll(baselist);
 
         assertEquals(baselist.size(), tree.entries().size());
@@ -500,7 +503,7 @@ public class DBBQuadTreeTest {
     @Test
     public void testContainsKey() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         tree.putAll(baselist);
 
         assertTrue(toKeys(baselist).stream().allMatch((key) -> tree.containsKey(key)));
@@ -512,35 +515,39 @@ public class DBBQuadTreeTest {
     @Test
     public void testContainsValue() {
         final QuadTree<ID2BoundingBox, D2Point> tree = newTree();
-        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize));
+        final Set<Pair<ID2BoundingBox, D2Point>> baselist = new HashSet(getPoints(batchsize, tree.getBounds()));
         tree.putAll(baselist);
 
         assertTrue(toValues(baselist).stream().allMatch((key) -> tree.containsValue(key)));
     }
 
     private final Random rand = new Random(9327490235L);
-    private final Set<ID2BoundingBox> points = new HashSet<>();
+    private final Set<ID2BoundingBox> boxes = new HashSet<>();
 
-    List<Pair<ID2BoundingBox, D2Point>> getPoints(final int size) {
+    List<Pair<ID2BoundingBox, D2Point>> getPoints(final int size, ID2BoundingBox box) {
         ArrayList<Pair<ID2BoundingBox, D2Point>> list = new ArrayList<>(size);
         while (list.size() < size) {
-            D2Point p = getPoint();
-            if (!points.contains(p)) {
-                double lx = rand.nextDouble();
-                double ly = rand.nextDouble();
-                double ux = rand.nextDouble();
-                double uy = rand.nextDouble();
-                D2BoundingBox box = new D2BoundingBox(Math.min(lx, ux), Math.min(ly, uy), Math.max(lx, ux), Math.max(ly, uy));
-                list.add(new Pair<>(box, getPoint()));
+//            D2Point p = getPoint();
+
+            double lx = box.getLower().getX() + rand.nextDouble() * box.getWidth();
+            double ly = box.getLower().getY() + rand.nextDouble() * box.getHeight();
+            double ux = box.getLower().getX() + rand.nextDouble() * box.getWidth();
+            double uy = box.getLower().getY() + rand.nextDouble() * box.getHeight();
+
+            D2BoundingBox bb = new D2BoundingBox(Math.min(lx, ux), Math.min(ly, uy), Math.max(lx, ux), Math.max(ly, uy));
+            if (!boxes.contains(bb)) {
+                list.add(new Pair<>(bb, getPoint(box)));
             }
         }
 
-        points.addAll(list.parallelStream().map((p) -> p.getKey()).collect(Collectors.toList()));
+        boxes.addAll(list.parallelStream().map((p) -> p.getKey()).collect(Collectors.toList()));
         return Collections.unmodifiableList(list);
     }
 
-    D2Point getPoint() {
-        return new D2Point(rand.nextDouble(), rand.nextDouble());
+    D2Point getPoint(ID2BoundingBox box) {
+        double lx = box.getLower().getX() + rand.nextDouble() * box.getWidth();
+        double ly = box.getLower().getY() + rand.nextDouble() * box.getHeight();
+        return new D2Point(lx, ly);
     }
 
     List<ID2BoundingBox> toKeys(final Collection<Pair<ID2BoundingBox, D2Point>> inlist) {

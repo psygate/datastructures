@@ -28,14 +28,14 @@ import java.util.Map;
  *
  * @author psygate (https://github.com/psygate)
  */
-abstract class ANode<K, V, Q extends ANode, T> {
+abstract class AbstractSpatialNode<K, V, Q extends AbstractSpatialNode, T> {
 
     private final List<Pair<K, V>> values;
     private final Map<T, Q> children;
     private final int maxNodeSize;
     private boolean split = false;
 
-    public ANode(List<Pair<K, V>> values, int maxNodeSize) {
+    public AbstractSpatialNode(List<Pair<K, V>> values, int maxNodeSize) {
         this.values = values;
         this.children = new HashMap<>();
         this.maxNodeSize = maxNodeSize;
@@ -153,7 +153,7 @@ abstract class ANode<K, V, Q extends ANode, T> {
      * @return
      */
     int subtreeValueCount() {
-        return size() + getChildren().values().stream().mapToInt(ANode::subtreeValueCount).sum();
+        return size() + getChildren().values().stream().mapToInt(AbstractSpatialNode::subtreeValueCount).sum();
     }
 
     /**
@@ -162,7 +162,7 @@ abstract class ANode<K, V, Q extends ANode, T> {
      * @return Count of nodes in the subtree.
      */
     int subtreeSize() {
-        return 1 + getChildren().values().stream().mapToInt(ANode::subtreeSize).sum();
+        return 1 + getChildren().values().stream().mapToInt(AbstractSpatialNode::subtreeSize).sum();
     }
 
     /**
@@ -171,6 +171,6 @@ abstract class ANode<K, V, Q extends ANode, T> {
      * @return True if the subtree starting at this node contains no values.
      */
     boolean isSubtreeEmpty() {
-        return isEmpty() && getChildren().values().stream().allMatch(ANode::isSubtreeEmpty);
+        return isEmpty() && getChildren().values().stream().allMatch(AbstractSpatialNode::isSubtreeEmpty);
     }
 }

@@ -19,7 +19,7 @@
 package com.psygate.datastructures.spatial.trees.recursive;
 
 import com.psygate.datastructures.util.Pair;
-import com.psygate.datastructures.spatial.D2BoundingBox;
+import com.psygate.datastructures.spatial.D3BoundingBox;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Iterator;
@@ -32,8 +32,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import com.psygate.datastructures.spatial.trees.BoundedSpatialTree;
-import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.ID2Orderable;
+import com.psygate.datastructures.spatial.ID3BoundingBox;
+import com.psygate.datastructures.spatial.ID3Orderable;
 
 /**
  * Immutable quad tree implementation. This tree cannot be modified after
@@ -43,9 +43,9 @@ import com.psygate.datastructures.spatial.ID2Orderable;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpatialTree<K, V, ID2BoundingBox, ID2BoundingBox> {
+public class ImmutableOcTree<K extends ID3Orderable, V> implements BoundedSpatialTree<K, V, ID3BoundingBox, ID3BoundingBox> {
 
-    private final QuadNode<K, V> root;
+    private final OcNode<K, V> root;
     int size = 0;
 
     /**
@@ -53,8 +53,8 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @param bounds Bounds of the new tree.
      * @param maxNodeSize Maximum node size of the new tree.
      */
-    ImmutableQuadTree(ID2BoundingBox bounds, int maxNodeSize) {
-        this.root = new QuadNode<>(new D2BoundingBox(bounds), maxNodeSize);
+    ImmutableOcTree(ID3BoundingBox bounds, int maxNodeSize) {
+        this.root = new OcNode<>(new D3BoundingBox(bounds), maxNodeSize);
     }
 
     /**
@@ -62,7 +62,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @param tree SpatialTree to copy.
      * @param maxNodeSize Maximum node size of the new tree.
      */
-    public ImmutableQuadTree(BoundedSpatialTree<K, V, ID2BoundingBox, ID2BoundingBox> tree, int maxNodeSize) {
+    public ImmutableOcTree(BoundedSpatialTree<K, V, ID3BoundingBox, ID3BoundingBox> tree, int maxNodeSize) {
         this(tree.entryStream(), tree.getBounds(), maxNodeSize);
     }
 
@@ -72,7 +72,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @param bounds Bounds of the new tree.
      * @param maxNodeSize Maximum node size of the new tree.
      */
-    public ImmutableQuadTree(Map<K, V> values, ID2BoundingBox bounds, int maxNodeSize) {
+    public ImmutableOcTree(Map<K, V> values, ID3BoundingBox bounds, int maxNodeSize) {
         this(values.entrySet(), bounds, maxNodeSize);
     }
 
@@ -82,7 +82,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @param bounds Bounds of the new tree.
      * @param maxNodeSize Maximum node size of the new tree.
      */
-    public ImmutableQuadTree(Collection<? extends Map.Entry<K, V>> values, ID2BoundingBox bounds, int maxNodeSize) {
+    public ImmutableOcTree(Collection<? extends Map.Entry<K, V>> values, ID3BoundingBox bounds, int maxNodeSize) {
         this(values.stream(), bounds, maxNodeSize);
     }
 
@@ -92,8 +92,8 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @param bounds Bounds of the new tree.
      * @param maxNodeSize Maximum node size of the new tree.
      */
-    ImmutableQuadTree(Stream<? extends Map.Entry<K, V>> values, ID2BoundingBox bounds, int maxNodeSize) {
-        this.root = new QuadNode<>(new D2BoundingBox(bounds), maxNodeSize);
+    ImmutableOcTree(Stream<? extends Map.Entry<K, V>> values, ID3BoundingBox bounds, int maxNodeSize) {
+        this.root = new OcNode<>(new D3BoundingBox(bounds), maxNodeSize);
         values.forEach((en) -> {
             root.add(new Pair<>(en));
             size++;
@@ -101,7 +101,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
     }
 
     @Override
-    public ID2BoundingBox getBounds() {
+    public ID3BoundingBox getBounds() {
         return root.getBounds();
     }
 
@@ -116,7 +116,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
     }
 
     @Override
-    public Stream<Map.Entry<K, V>> selectiveEntryStream(Predicate<ID2BoundingBox> predicate) {
+    public Stream<Map.Entry<K, V>> selectiveEntryStream(Predicate<ID3BoundingBox> predicate) {
         return selectiveNodeStream(root, predicate)
                 .filter((n) -> !n.isEmpty())
                 .flatMap((n) -> n.getValues().stream());
@@ -126,8 +126,8 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      *
      * @return Stream iterating over all nodes in the contained tree.
      */
-    Stream<QuadNode<K, V>> nodeStream() {
-        return selectiveNodeStream(root, (ID2BoundingBox b) -> true);
+    Stream<OcNode<K, V>> nodeStream() {
+        return selectiveNodeStream(root, (ID3BoundingBox b) -> true);
     }
 
     /**
@@ -135,7 +135,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @return Stream iterating over all nodes that satisfy
      * Predicate.test(node.getBounds()) == true.
      */
-    Stream<QuadNode<K, V>> selectiveNodeStream(QuadNode<K, V> node, Predicate<ID2BoundingBox> pred) {
+    Stream<OcNode<K, V>> selectiveNodeStream(OcNode<K, V> node, Predicate<ID3BoundingBox> pred) {
         return StreamSupport.stream(new NodeSpliterator(root, pred), false);
     }
 
@@ -144,7 +144,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @return Spliterator iterating over all nodes that satisfy
      * Predicate.test(node.getBounds()) == true.
      */
-    Spliterator<QuadNode<K, V>> getSpliterator(QuadNode<K, V> node, Predicate<ID2BoundingBox> pred) {
+    Spliterator<OcNode<K, V>> getSpliterator(OcNode<K, V> node, Predicate<ID3BoundingBox> pred) {
         return new NodeSpliterator(node, pred);
     }
 
@@ -152,7 +152,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      *
      * @return Iterator iterating over all nodes in the contained tree.
      */
-    Iterator<QuadNode<K, V>> nodeIterator() {
+    Iterator<OcNode<K, V>> nodeIterator() {
         return nodeStream().iterator();
     }
 
@@ -161,7 +161,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      * @return Iterator iterating over all nodes that satisfy
      * Predicate.test(node.getBounds()) == true.
      */
-    Iterator<QuadNode<K, V>> nodeIterator(Predicate<ID2BoundingBox> pred) {
+    Iterator<OcNode<K, V>> nodeIterator(Predicate<ID3BoundingBox> pred) {
         return selectiveNodeStream(root, pred).iterator();
     }
 
@@ -173,24 +173,24 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
      *
      * @return Root node if this tree. Cannot be null.
      */
-    QuadNode<K, V> getRoot() {
+    OcNode<K, V> getRoot() {
         return root;
     }
 
     @Override
     public boolean containsKey(K key) {
-        return selectiveKeyStream((ID2BoundingBox b) -> b.contains(key))
+        return selectiveKeyStream((ID3BoundingBox b) -> b.contains(key))
                 .anyMatch((k) -> Objects.equals(k, key));
     }
 
     @Override
     public boolean contains(K key, V value) {
-        return selectiveEntryStream((ID2BoundingBox b) -> b.contains(key))
+        return selectiveEntryStream((ID3BoundingBox b) -> b.contains(key))
                 .anyMatch((en) -> Objects.equals(en.getKey(), key) && Objects.equals(en.getValue(), value));
     }
 
     @Override
-    public boolean containsValue(V value, Predicate<ID2BoundingBox> pred) {
+    public boolean containsValue(V value, Predicate<ID3BoundingBox> pred) {
         return selectiveEntryStream(pred)
                 .map(Map.Entry::getValue)
                 .anyMatch((v) -> Objects.equals(v, value));
@@ -205,30 +205,30 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
     /**
      * Spliterator iterating over all nodes of the tree.
      */
-    final class NodeSpliterator implements Spliterator<QuadNode<K, V>> {
+    final class NodeSpliterator implements Spliterator<OcNode<K, V>> {
 
-        private final Queue<QuadNode<K, V>> stack = new LinkedList<>();
-        private final Predicate<ID2BoundingBox> predicate;
+        private final Queue<OcNode<K, V>> stack = new LinkedList<>();
+        private final Predicate<ID3BoundingBox> predicate;
 
         protected NodeSpliterator() {
             this(root);
         }
 
-        protected NodeSpliterator(QuadNode<K, V> node) {
-            this(node, (ID2BoundingBox t) -> true);
+        protected NodeSpliterator(OcNode<K, V> node) {
+            this(node, (ID3BoundingBox t) -> true);
         }
 
-        protected NodeSpliterator(QuadNode<K, V> node, Predicate<ID2BoundingBox> predicate) {
+        protected NodeSpliterator(OcNode<K, V> node, Predicate<ID3BoundingBox> predicate) {
             stack.add(Objects.requireNonNull(node));
             this.predicate = predicate;
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super QuadNode<K, V>> action) {
+        public boolean tryAdvance(Consumer<? super OcNode<K, V>> action) {
             if (stack.isEmpty()) {
                 return false;
             } else {
-                QuadNode<K, V> selected = stack.remove();
+                OcNode<K, V> selected = stack.remove();
                 selected.getChildren().values().stream()
                         .filter((cn) -> predicate.test(cn.getBounds()))
                         .forEach((cn) -> stack.add(cn));
@@ -238,7 +238,7 @@ public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpat
         }
 
         @Override
-        public Spliterator<QuadNode<K, V>> trySplit() {
+        public Spliterator<OcNode<K, V>> trySplit() {
             if (!stack.isEmpty()) {
                 return new NodeSpliterator(stack.remove(), predicate);
             } else {

@@ -21,7 +21,6 @@ package com.psygate.datastructures.spatial.trees;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -177,19 +176,7 @@ public interface SpatialTree<K, V, Q> {
      * inside the tree.
      */
     default Iterator<K> selectiveKeyIterator(Predicate<Q> predicate) {
-        return new Iterator<K>() {
-            private final Iterator<Map.Entry<K, V>> it = selectiveEntryIterator(predicate);
-
-            @Override
-            public boolean hasNext() {
-                return it.hasNext();
-            }
-
-            @Override
-            public K next() {
-                return it.next().getKey();
-            }
-        };
+        return selectiveKeyStream(predicate).iterator();
     }
 
     /**
@@ -199,19 +186,7 @@ public interface SpatialTree<K, V, Q> {
      * @return An iterator iterating over all values of the tree.
      */
     default Iterator<V> selectiveValueIterator(Predicate<Q> predicate) {
-        return new Iterator<V>() {
-            private final Iterator<Map.Entry<K, V>> it = selectiveEntryIterator(predicate);
-
-            @Override
-            public boolean hasNext() {
-                return it.hasNext();
-            }
-
-            @Override
-            public V next() {
-                return it.next().getValue();
-            }
-        };
+        return selectiveValueStream(predicate).iterator();
     }
 
     /**

@@ -18,7 +18,7 @@
  */
 package com.psygate.datastructures.spatial.trees.recursive;
 
-import com.psygate.datastructures.spatial.trees.recursive.QuadNode;
+import com.psygate.datastructures.spatial.trees.recursive.OcNode;
 import com.psygate.datastructures.util.Pair;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -26,16 +26,16 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.ID2Point;
+import com.psygate.datastructures.spatial.ID3BoundingBox;
+import com.psygate.datastructures.spatial.ID3Point;
 
 /**
  *
  * @author psygate (https://github.com/psygate)
  */
-public class AQuadNodeTest {
+public class AOcNodeTest {
 
-    public AQuadNodeTest() {
+    public AOcNodeTest() {
     }
 
     @BeforeClass
@@ -55,30 +55,30 @@ public class AQuadNodeTest {
     }
 
     /**
-     * Test of split method, of class QuadNode.
+     * Test of split method, of class OcNode.
      */
     @Test
     public void testNode() {
-        QuadNode<ID2Point, Object> node = new QuadNode<>(ID2BoundingBox.build(0, 0, 100, 100), 4);
+        OcNode<ID3Point, Object> node = new OcNode<>(ID3BoundingBox.build(0, 0, 0, 100, 100, 100), 4);
         assertTrue(node.isEmpty());
         assertEquals(0, node.size());
         assertFalse(node.hasChildren());
         for (int i = 0; i < 4; i++) {
-            node.add(new Pair<>(ID2Point.build(i, i), new Object()));
+            node.add(new Pair<>(ID3Point.build(i, i, i), new Object()));
             assertFalse(node.isEmpty());
             assertEquals(i + 1, node.size());
             assertFalse(node.hasChildren());
         }
 
-        node.add(new Pair<>(ID2Point.build(3, 3), new Object()));
+        node.add(new Pair<>(ID3Point.build(3, 3, 3), new Object()));
         assertTrue(node.isEmpty());
         assertEquals(0, node.size());
         assertTrue(node.hasChildren());
-        assertEquals(8, node.subtreeSize());
-        node.add(new Pair<>(ID2Point.build(3, 3), new Object()));
+        assertEquals(5, node.subtreeSize());
+        node.add(new Pair<>(ID3Point.build(3, 3, 3), new Object()));
         assertTrue(node.isEmpty());
         assertEquals(0, node.size());
         assertTrue(node.hasChildren());
-        assertEquals(8, node.subtreeSize());
+        assertEquals(5, node.subtreeSize());
     }
 }

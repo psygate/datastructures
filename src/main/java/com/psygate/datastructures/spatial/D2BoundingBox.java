@@ -18,17 +18,9 @@
  */
 package com.psygate.datastructures.spatial;
 
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
 import java.util.Objects;
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
 import com.psygate.datastructures.spatial.ID2BoundingBox;
 import com.psygate.datastructures.spatial.ID2Point;
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
-import static com.psygate.datastructures.spatial.ID2BoundingBox.build;
 
 /**
  * Implementation of the IDBoundingBox interface.

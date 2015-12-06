@@ -31,8 +31,8 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import com.psygate.datastructures.spatial.trees.BoundedSpatialTree;
-import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.ID2Orderable;
+import com.psygate.datastructures.spatial.ID3BoundingBox;
+import com.psygate.datastructures.spatial.ID3Orderable;
 
 /**
  *
@@ -40,7 +40,7 @@ import com.psygate.datastructures.spatial.ID2Orderable;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V> implements MutableSpatialTree<K, V, ID2BoundingBox> {
+public class OcTree<K extends ID3Orderable, V> extends ImmutableOcTree<K, V> implements MutableSpatialTree<K, V, ID3BoundingBox> {
 
     private final AtomicLong modcnt = new AtomicLong(Long.MIN_VALUE);
 
@@ -48,7 +48,7 @@ public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V>
      *
      * @param tree Tree to copy.
      */
-    public QuadTree(QuadTree<K, V> tree) {
+    public OcTree(OcTree<K, V> tree) {
         super(tree, tree.getMaxNodeSize());
     }
 
@@ -57,7 +57,7 @@ public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V>
      * @param tree Tree to copy.
      * @param maxNodeSize Maximum node size.
      */
-    public QuadTree(BoundedSpatialTree<K, V, ID2BoundingBox, ID2BoundingBox> tree, int maxNodeSize) {
+    public OcTree(BoundedSpatialTree<K, V, ID3BoundingBox, ID3BoundingBox> tree, int maxNodeSize) {
         super(tree, maxNodeSize);
     }
 
@@ -66,7 +66,7 @@ public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V>
      * @param bounds Bounds of the new quad tree.
      * @param maxNodeSize Maximum node size.
      */
-    public QuadTree(ID2BoundingBox bounds, int maxNodeSize) {
+    public OcTree(ID3BoundingBox bounds, int maxNodeSize) {
         super(bounds, maxNodeSize);
     }
 
@@ -102,7 +102,7 @@ public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V>
     }
 
     @Override
-    public Collection<V> removeValue(V value, Predicate<ID2BoundingBox> hint) {
+    public Collection<V> removeValue(V value, Predicate<ID3BoundingBox> hint) {
         Collection<V> col = getRoot().subtreeRemoveValue(value, hint).stream()
                 .map(Pair::getValue)
                 .collect(Collectors.toList());
@@ -122,11 +122,11 @@ public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V>
     }
 
     @Override
-    Spliterator<QuadNode<K, V>> getSpliterator(QuadNode<K, V> node, Predicate<ID2BoundingBox> pred) {
+    Spliterator<OcNode<K, V>> getSpliterator(OcNode<K, V> node, Predicate<ID3BoundingBox> pred) {
         return new CheckedNodeSpliterator(node, pred); //To change body of generated methods, choose Tools | Templates.
     }
 
-    final class CheckedNodeSpliterator implements Spliterator<QuadNode<K, V>> {
+    final class CheckedNodeSpliterator implements Spliterator<OcNode<K, V>> {
 
         private final long id = modcnt.get();
         private final NodeSpliterator it;
@@ -135,22 +135,22 @@ public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V>
             it = new NodeSpliterator();
         }
 
-        protected CheckedNodeSpliterator(QuadNode<K, V> node) {
-            it = new NodeSpliterator(node, (ID2BoundingBox t) -> true);
+        protected CheckedNodeSpliterator(OcNode<K, V> node) {
+            it = new NodeSpliterator(node, (ID3BoundingBox t) -> true);
         }
 
-        protected CheckedNodeSpliterator(QuadNode<K, V> node, Predicate<ID2BoundingBox> predicate) {
+        protected CheckedNodeSpliterator(OcNode<K, V> node, Predicate<ID3BoundingBox> predicate) {
             it = new NodeSpliterator(node, predicate);
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super QuadNode<K, V>> action) {
+        public boolean tryAdvance(Consumer<? super OcNode<K, V>> action) {
             checkState();
             return it.tryAdvance(action);
         }
 
         @Override
-        public Spliterator<QuadNode<K, V>> trySplit() {
+        public Spliterator<OcNode<K, V>> trySplit() {
             checkState();
             return it.trySplit();
         }

@@ -18,8 +18,6 @@
  */
 package com.psygate.datastructures.spatial;
 
-import com.psygate.datastructures.spatial.d2.*;
-
 /**
  *
  * @author psygate (https://github.com/psygate)

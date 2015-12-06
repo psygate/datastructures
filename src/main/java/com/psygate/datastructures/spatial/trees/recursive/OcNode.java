@@ -19,7 +19,7 @@
 package com.psygate.datastructures.spatial.trees.recursive;
 
 import com.psygate.datastructures.util.Pair;
-import com.psygate.datastructures.spatial.trees.recursive.QuadNode.Quadrant;
+import com.psygate.datastructures.spatial.trees.recursive.OcNode.Quadrant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.ID2Orderable;
+import com.psygate.datastructures.spatial.ID3BoundingBox;
+import com.psygate.datastructures.spatial.ID3Orderable;
 
 /**
  * Default implementation of a simple quad tree node.
@@ -38,35 +38,52 @@ import com.psygate.datastructures.spatial.ID2Orderable;
  * @see QuadTree
  * @author psygate (https://github.com/psygate)
  */
-class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, QuadNode<K, V>, Quadrant> {
+class OcNode<K extends ID3Orderable, V> extends AbstractSpatialNode<K, V, OcNode<K, V>, Quadrant> {
 
     enum Quadrant {
-        NW, NE, SW, SE
+        UNW, UNE, USW, USE,
+        DNW, DNE, DSW, DSE
     };
 
-    private final ID2BoundingBox box;
-    private final Map<ID2BoundingBox, Quadrant> subboxes = new HashMap<>();
+    private final ID3BoundingBox box;
+    private final Map<ID3BoundingBox, Quadrant> subboxes = new HashMap<>();
 //    private final ArrayList<QuadNode<K, V>> getChildren() = new ArrayList<>(4);
 //    private boolean isSplit = false;
 
-    QuadNode(ID2BoundingBox box, int maxNodeSize) {
+    OcNode(ID3BoundingBox box, int maxNodeSize) {
         super(new ArrayList<>(maxNodeSize), maxNodeSize);
         this.box = box;
-        ID2BoundingBox[] xsplit = box.splitMidX();
-        ID2BoundingBox[] yupsplit = xsplit[0].splitMidY();
-        ID2BoundingBox[] ydownsplit = xsplit[1].splitMidY();
-        ID2BoundingBox nw = yupsplit[0];
-        ID2BoundingBox sw = yupsplit[1];
-        ID2BoundingBox ne = ydownsplit[0];
-        ID2BoundingBox se = ydownsplit[1];
+        //Split into up and down.
+        ID3BoundingBox[] split = box.splitMidY();
 
-        subboxes.put(nw, Quadrant.NW);
-        subboxes.put(sw, Quadrant.SW);
-        subboxes.put(ne, Quadrant.NE);
-        subboxes.put(se, Quadrant.SE);
+        ID3BoundingBox[] uxsplit = split[0].splitMidX();
+        ID3BoundingBox[] uyupsplit = uxsplit[0].splitMidY();
+        ID3BoundingBox[] uydownsplit = uxsplit[1].splitMidY();
+        ID3BoundingBox unw = uyupsplit[0];
+        ID3BoundingBox usw = uyupsplit[1];
+        ID3BoundingBox une = uydownsplit[0];
+        ID3BoundingBox use = uydownsplit[1];
+
+        ID3BoundingBox[] dxsplit = split[0].splitMidX();
+        ID3BoundingBox[] dyupsplit = dxsplit[0].splitMidY();
+        ID3BoundingBox[] dydownsplit = dxsplit[1].splitMidY();
+        ID3BoundingBox dnw = dyupsplit[0];
+        ID3BoundingBox dsw = dyupsplit[1];
+        ID3BoundingBox dne = dydownsplit[0];
+        ID3BoundingBox dse = dydownsplit[1];
+
+        subboxes.put(unw, Quadrant.UNW);
+        subboxes.put(usw, Quadrant.USW);
+        subboxes.put(une, Quadrant.UNE);
+        subboxes.put(use, Quadrant.USE);
+
+        subboxes.put(dnw, Quadrant.DNW);
+        subboxes.put(dsw, Quadrant.DSW);
+        subboxes.put(dne, Quadrant.DNE);
+        subboxes.put(dse, Quadrant.DSE);
     }
 
-    QuadNode(ID2BoundingBox box, int maxNodeSize, Collection<Pair<K, V>> values) {
+    OcNode(ID3BoundingBox box, int maxNodeSize, Collection<Pair<K, V>> values) {
         this(box, maxNodeSize);
         values.stream().forEach((pair) -> add(pair));
     }
@@ -74,7 +91,7 @@ class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, Quad
     @Override
     void add(Pair<K, V> newpair) {
         assert box.contains(newpair.getKey()) : "Not contained: " + box + " - " + newpair.getKey();
-        QuadNode<K, V> child = getChild(newpair.getKey());
+        OcNode<K, V> child = getChild(newpair.getKey());
 
         if (child == this) {
             super.add(newpair);
@@ -88,7 +105,7 @@ class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, Quad
      *
      * @return Bounds of the node.
      */
-    ID2BoundingBox getBounds() {
+    ID3BoundingBox getBounds() {
         return box;
     }
 
@@ -111,14 +128,14 @@ class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, Quad
      * @return A child node if the key fits into a child node or this node, if
      * the key doesn't fit within any child node.
      */
-    QuadNode<K, V> getChild(K key) {
+    OcNode<K, V> getChild(K key) {
         assert box.contains(key);
 
         if (isSplit()) {
-            for (Map.Entry<ID2BoundingBox, Quadrant> entry : subboxes.entrySet()) {
+            for (Map.Entry<ID3BoundingBox, Quadrant> entry : subboxes.entrySet()) {
                 if (entry.getKey().contains(key)) {
                     if (!hasChild(entry.getValue())) {
-                        setChild(entry.getValue(), new QuadNode<>(entry.getKey(), getMaxNodeSize()));
+                        setChild(entry.getValue(), new OcNode<>(entry.getKey(), getMaxNodeSize()));
                     }
 
                     return getChild(entry.getValue());
@@ -176,7 +193,7 @@ class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, Quad
      * searched for the value.
      * @return A list containing all removed values.
      */
-    Collection<Pair<K, V>> subtreeRemoveValue(V value, Predicate<ID2BoundingBox> hint) {
+    Collection<Pair<K, V>> subtreeRemoveValue(V value, Predicate<ID3BoundingBox> hint) {
         List<Pair<K, V>> vals = getValues().stream().filter((p) -> Objects.equals(p.getValue(), value)).collect(Collectors.toList());
         getValues().removeAll(vals);
         getChildren().values().stream()
@@ -197,7 +214,7 @@ class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, Quad
     boolean checkIntegrity() {
         assert getMaxNodeSize() >= 1;
         assert subboxes != null;
-        assert subboxes.size() == 4;
+        assert subboxes.size() == 8;
         assert subboxes.keySet().stream().noneMatch((b) -> b == null);
 //        assert values.size() <= parent.getMaxNodeSize();
         assert getValues().stream().noneMatch((p) -> p == null);
@@ -207,7 +224,7 @@ class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, Quad
         return true;
     }
 
-    QuadNode<K, V> construct(final ID2BoundingBox box) {
-        return new QuadNode<>(box, getMaxNodeSize());
+    OcNode<K, V> construct(final ID3BoundingBox box) {
+        return new OcNode<>(box, getMaxNodeSize());
     }
 }

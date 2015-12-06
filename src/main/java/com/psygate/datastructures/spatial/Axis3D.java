@@ -18,7 +18,6 @@
  */
 package com.psygate.datastructures.spatial;
 
-import com.psygate.datastructures.spatial.d2.*;
 
 /**
  * Enumeration representing all available tree dimensional axis in a euclidian
