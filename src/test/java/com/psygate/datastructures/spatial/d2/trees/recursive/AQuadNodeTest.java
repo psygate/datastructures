@@ -20,7 +20,6 @@ package com.psygate.datastructures.spatial.d2.trees.recursive;
 
 import com.psygate.datastructures.maps.Pair;
 import com.psygate.datastructures.spatial.d2.IDBoundingBox;
-import com.psygate.datastructures.spatial.d2.IDBoundingBoxContainable;
 import com.psygate.datastructures.spatial.d2.IDPoint;
 import java.util.Collection;
 import java.util.Iterator;
@@ -34,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.psygate.datastructures.spatial.NodeSizeSpatialTree;
+import com.psygate.datastructures.spatial.d2.IDOrderable;
 
 /**
  *
@@ -70,18 +70,18 @@ public class AQuadNodeTest {
         assertEquals(0, node.size());
         assertFalse(node.hasChildren());
         for (int i = 0; i < 4; i++) {
-            node.put(new Pair<>(IDPoint.build(i, i), new Object()));
+            node.add(new Pair<>(IDPoint.build(i, i), new Object()));
             assertFalse(node.isEmpty());
             assertEquals(i + 1, node.size());
             assertFalse(node.hasChildren());
         }
 
-        node.put(new Pair<>(IDPoint.build(3, 3), new Object()));
+        node.add(new Pair<>(IDPoint.build(3, 3), new Object()));
         assertTrue(node.isEmpty());
         assertEquals(0, node.size());
         assertTrue(node.hasChildren());
         assertEquals(8, node.subtreeSize());
-        node.put(new Pair<>(IDPoint.build(3, 3), new Object()));
+        node.add(new Pair<>(IDPoint.build(3, 3), new Object()));
         assertTrue(node.isEmpty());
         assertEquals(0, node.size());
         assertTrue(node.hasChildren());

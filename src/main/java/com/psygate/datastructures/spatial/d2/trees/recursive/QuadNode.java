@@ -20,16 +20,18 @@ package com.psygate.datastructures.spatial.d2.trees.recursive;
 
 import com.psygate.datastructures.maps.Pair;
 import com.psygate.datastructures.spatial.d2.IDBoundingBox;
-import com.psygate.datastructures.spatial.d2.IDBoundingBoxContainable;
+import com.psygate.datastructures.spatial.d2.trees.recursive.QuadNode.Quadrant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import com.psygate.datastructures.spatial.d2.IDOrderable;
 
 /**
  * Default implementation of a simple quad tree node.
@@ -38,77 +40,52 @@ import java.util.stream.Collectors;
  * @see QuadTree
  * @author psygate (https://github.com/psygate)
  */
-class QuadNode<K extends IDBoundingBoxContainable, V> {
+class QuadNode<K extends IDOrderable, V> extends ANode<K, V, QuadNode<K, V>, Quadrant> {
+
+    enum Quadrant {
+        NW, NE, SW, SE
+    };
 
     private final int maxNodeSize;
     private final IDBoundingBox box;
-    private final IDBoundingBox[] subboxes;
-    private final List<Pair<K, V>> values;
-    private final ArrayList<QuadNode<K, V>> children = new ArrayList<>(4);
-    private boolean isForked = false;
+    private final Map<IDBoundingBox, Quadrant> subboxes = new HashMap<>();
+//    private final ArrayList<QuadNode<K, V>> getChildren() = new ArrayList<>(4);
+//    private boolean isSplit = false;
 
     QuadNode(IDBoundingBox box, int maxNodeSize) {
+        super(new ArrayList<>(maxNodeSize), maxNodeSize);
         this.box = box;
-        values = new ArrayList<>(maxNodeSize);
-        subboxes = Arrays.stream(box.splitMidX())
-                .flatMap((b) -> Arrays.stream(b.splitMidY()))
-                .collect(Collectors.toList()).toArray(new IDBoundingBox[4]);;
+        IDBoundingBox[] xsplit = box.splitMidX();
+        IDBoundingBox[] yupsplit = xsplit[0].splitMidY();
+        IDBoundingBox[] ydownsplit = xsplit[1].splitMidY();
+        IDBoundingBox nw = yupsplit[0];
+        IDBoundingBox sw = yupsplit[1];
+        IDBoundingBox ne = ydownsplit[0];
+        IDBoundingBox se = ydownsplit[1];
+
+        subboxes.put(nw, Quadrant.NW);
+        subboxes.put(sw, Quadrant.SW);
+        subboxes.put(ne, Quadrant.NE);
+        subboxes.put(se, Quadrant.SE);
+
         this.maxNodeSize = maxNodeSize;
-        children.addAll(Arrays.asList(new QuadNode[]{null, null, null, null}));
     }
 
     QuadNode(IDBoundingBox box, int maxNodeSize, Collection<Pair<K, V>> values) {
         this(box, maxNodeSize);
-        values.stream().forEach((pair) -> put(pair));
+        values.stream().forEach((pair) -> add(pair));
     }
 
-    /**
-     * Size of the quadnode value list.
-     *
-     * @return Size of the quadnode value list.
-     */
-    int size() {
-        return values.size();
-    }
-
-    /**
-     * Size of the subtree value list, including all child nodes and their child
-     * nodes.
-     *
-     * @return
-     */
-    int subtreeValueCount() {
-        return size() + children.stream().filter((cn) -> cn != null).mapToInt(QuadNode::subtreeValueCount).sum();
-    }
-
-    /**
-     * Size of the subtree.
-     *
-     * @return Count of nodes in the subtree.
-     */
-    int subtreeSize() {
-        return 1 + children.stream().filter((cn) -> cn != null).mapToInt(QuadNode::subtreeSize).sum();
-    }
-
-    /**
-     * Inserts a value pair into the node. The value key must be contained in
-     * this nodes bounding box.
-     *
-     * @param newpair Value to be inserted.
-     */
-    void put(Pair<K, V> newpair) {
+    @Override
+    void add(Pair<K, V> newpair) {
         assert box.contains(newpair.getKey()) : "Not contained: " + box + " - " + newpair.getKey();
-        if (hasChildren() && Arrays.stream(subboxes).anyMatch((bb) -> bb.contains(newpair.getKey()))) {
-            getChild(newpair.getKey()).put(newpair);
-        } else {
-            values.add(newpair);
-            if (values.size() > maxNodeSize && !isForked) {
-                split();
-                assert !children.contains(this);
-            }
-//            assert values.size() <= parent.getMaxNodeSize() : "Values is larger than max size. " + values.size();
-        }
+        QuadNode<K, V> child = getChild(newpair.getKey());
 
+        if (child == this) {
+            super.add(newpair);
+        } else {
+            child.add(newpair);
+        }
     }
 
     /**
@@ -120,119 +97,41 @@ class QuadNode<K extends IDBoundingBoxContainable, V> {
         return box;
     }
 
-    /**
-     * Values in the node.
-     *
-     * @return Value list containing all value pairs in this node.
-     */
-    List<Pair<K, V>> getValues() {
-        return values;
-    }
-
-    /**
-     * Splits the node into subnodes and moves all value pairs that are
-     * contained within a subnode to the corresponding subnode.
-     */
+    @Override
     void split() {
-        for (Iterator<Pair<K, V>> it = values.iterator(); it.hasNext();) {
-            Pair<K, V> p = it.next();
-            QuadNode<K, V> child = getChild(p.getKey());
-            if (child != null) {
-                getChild(p.getKey()).put(p);
-                it.remove();
-            }
-        }
-        isForked = true;
+        setSplit(true);
+        int size = getValues().size();
+        List<Pair<K, V>> values = getValuesCopy();
+        clearValues();
+        values.forEach((v) -> add(v));
+        assert subtreeValueCount() == size;
+//        }
     }
 
     /**
-     * Returns the child that contains the key, or null if no child contains the
-     * key.
+     * Returns the child that contains the key, or this node if no child
+     * contains the key.
      *
      * @param key Key to query for child containment.
-     * @return A childnode if the key fits into a child node or null, if the key
-     * doesn't fit within any child node.
+     * @return A child node if the key fits into a child node or this node, if
+     * the key doesn't fit within any child node.
      */
     QuadNode<K, V> getChild(K key) {
-        final int selected = selectChild(key);
-
-        if (selected < 0 || selected > 3) {
-            return null;
-        }
-
-        if (children.get(selected) == null) {
-            children.set(selected, new QuadNode<>(subboxes[selected], maxNodeSize));
-        }
-
-        return children.get(selected);
-    }
-
-    /**
-     * Select the index of the child that contains the key, or -1 if the key
-     * fits into no child.
-     *
-     * @param key Key to query child containment for.
-     * @return Index of the child in the children list or -1 if no child
-     * contains the key.
-     */
-    int selectChild(K key) {
         assert box.contains(key);
-        for (int i = 0; i < subboxes.length; i++) {
-            if (subboxes[i].contains(key)) {
-                return i;
+        
+        if (isSplit()) {
+            for (Map.Entry<IDBoundingBox, Quadrant> entry : subboxes.entrySet()) {
+                if (entry.getKey().contains(key)) {
+                    if (!hasChild(entry.getValue())) {
+                        setChild(entry.getValue(), new QuadNode<>(entry.getKey(), maxNodeSize));
+                    }
+
+                    return getChild(entry.getValue());
+                }
             }
         }
 
-        return -1;
-    }
-
-    /**
-     * All children of this node. Modifying this list may lead to undefined
-     * behaviour.
-     *
-     * @return All children of this node.
-     */
-    List<QuadNode<K, V>> getChildren() {
-        return children;
-    }
-
-    /**
-     * True if no values are contained within this node.
-     *
-     * @return True if no values are contained within this node.
-     */
-    boolean isEmpty() {
-        return values.isEmpty();
-    }
-
-    /**
-     * True if the subtree starting at this node contains no values.
-     *
-     * @return True if the subtree starting at this node contains no values.
-     */
-    boolean isSubtreeEmpty() {
-        return isEmpty() && children.stream().allMatch((child) -> child != null && child.isEmpty());
-    }
-
-    /**
-     * True if this node has children.
-     *
-     * @return True if this node has children.
-     */
-    boolean hasChildren() {
-        return isForked && children.stream().anyMatch((p) -> p != null);
-    }
-
-    /**
-     * Clears this node, removing all values and children.
-     */
-    void clear() {
-        values.clear();
-        children.clear();
-
-        for (int i = 0; i < 4; i++) {
-            children.add(null);
-        }
+        return this;
     }
 
     /**
@@ -242,22 +141,11 @@ class QuadNode<K extends IDBoundingBoxContainable, V> {
      * @return A list containing all removed values.
      */
     List<Pair<K, V>> subtreeRemove(K key) {
-        List<Pair<K, V>> vals = values.stream().filter((p) -> Objects.equals(p.getKey(), key)).collect(Collectors.toList());
-        values.removeAll(vals);
-        children.stream()
-                .filter((cn) -> cn != null && cn.getBounds().contains(key))
+        List<Pair<K, V>> vals = getValues().stream().filter((p) -> Objects.equals(p.getKey(), key)).collect(Collectors.toList());
+        getValues().removeAll(vals);
+        getChildren().values().stream()
+                .filter((cn) -> cn.getBounds().contains(key))
                 .map((cn) -> cn.subtreeRemove(key))
-                .forEach((list) -> vals.addAll(list));
-
-        return vals;
-    }
-
-    public Collection<Pair<K, V>> subtreeRemoveValue(V value, Predicate<IDBoundingBox> hint) {
-        List<Pair<K, V>> vals = values.stream().filter((p) -> Objects.equals(p.getValue(), value)).collect(Collectors.toList());
-        values.removeAll(vals);
-        children.stream()
-                .filter((cn) -> cn != null && hint.test(cn.getBounds()))
-                .map((cn) -> cn.subtreeRemoveValue(value, hint))
                 .forEach((list) -> vals.addAll(list));
 
         return vals;
@@ -271,15 +159,34 @@ class QuadNode<K extends IDBoundingBoxContainable, V> {
      * @return List of values that have been removed.
      */
     List<Pair<K, V>> subtreeRemove(K key, V value) {
-        List<Pair<K, V>> vals = values.stream()
+        List<Pair<K, V>> vals = getValues().stream()
                 .filter((p) -> Objects.equals(p.getKey(), key) && Objects.equals(p.getValue(), value))
                 .collect(Collectors.toList());
 
-        values.removeAll(vals);
+        getValues().removeAll(vals);
 
-        children.stream()
-                .filter((cn) -> cn != null && cn.getBounds().contains(key))
+        getChildren().values().stream()
+                .filter((cn) -> cn.getBounds().contains(key))
                 .map((cn) -> cn.subtreeRemove(key, value))
+                .forEach((list) -> vals.addAll(list));
+
+        return vals;
+    }
+
+    /**
+     * Removes all values in this subtree that equal the provided value.
+     *
+     * @param value Value to search for.
+     * @param hint Predicate used to prematurely remove nodes that should not be
+     * searched for the value.
+     * @return A list containing all removed values.
+     */
+    Collection<Pair<K, V>> subtreeRemoveValue(V value, Predicate<IDBoundingBox> hint) {
+        List<Pair<K, V>> vals = getValues().stream().filter((p) -> Objects.equals(p.getValue(), value)).collect(Collectors.toList());
+        getValues().removeAll(vals);
+        getChildren().values().stream()
+                .filter((cn) -> hint.test(cn.getBounds()))
+                .map((cn) -> cn.subtreeRemoveValue(value, hint))
                 .forEach((list) -> vals.addAll(list));
 
         return vals;
@@ -295,23 +202,13 @@ class QuadNode<K extends IDBoundingBoxContainable, V> {
     boolean checkIntegrity() {
         assert maxNodeSize >= 1;
         assert subboxes != null;
-        assert subboxes.length == 4;
-        assert Arrays.stream(subboxes).noneMatch((b) -> b == null);
+        assert subboxes.size() == 4;
+        assert subboxes.keySet().stream().noneMatch((b) -> b == null);
 //        assert values.size() <= parent.getMaxNodeSize();
-        assert values.stream().noneMatch((p) -> p == null);
-        assert values.stream().allMatch((p) -> box.contains(p.getKey()));
+        assert getValues().stream().noneMatch((p) -> p == null);
+        assert getValues().stream().allMatch((p) -> box.contains(p.getKey()));
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                if (i == j) {
-                    continue;
-                }
-
-                assert !subboxes[i].same(subboxes[j]);
-            }
-        }
-
-        assert children.stream().filter((n) -> n != null).distinct().count() == children.stream().filter((n) -> n != null).count();
+        assert getChildren().values().stream().distinct().count() == getChildren().values().stream().filter((n) -> n != null).count();
         return true;
     }
 

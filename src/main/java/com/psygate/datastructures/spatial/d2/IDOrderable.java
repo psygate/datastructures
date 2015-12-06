@@ -22,7 +22,7 @@ package com.psygate.datastructures.spatial.d2;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface IDBoundingBoxContainable {
+public interface IDOrderable {
 
     /**
      * Checks if this is inside the provided bounding box.
@@ -31,4 +31,22 @@ public interface IDBoundingBoxContainable {
      * @return True if this is inside the box, else false.
      */
     boolean isInside(IDBoundingBox box);
+
+    /**
+     * Checks if this object is left or on a pivot provided.
+     *
+     * @param median The pivot point.
+     * @param axis Axis on which to check.
+     * @return True if the object is left of the pivot.
+     */
+    boolean leftOf(double median, Axis axis);
+
+    /**
+     * Checks if this object is right of a pivot provided.
+     *
+     * @param median The pivot point.
+     * @param axis Axis on which to check.
+     * @return True if the object is right of the pivot.
+     */
+    boolean rightOf(double median, Axis axis);
 }

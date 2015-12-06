@@ -20,7 +20,6 @@ package com.psygate.datastructures.spatial.d2.trees.recursive;
 
 import com.psygate.datastructures.maps.Pair;
 import com.psygate.datastructures.spatial.d2.IDBoundingBox;
-import com.psygate.datastructures.spatial.d2.IDBoundingBoxContainable;
 import com.psygate.datastructures.spatial.d2.DBoundingBox;
 import com.psygate.datastructures.spatial.MutableSpatialTree;
 import java.util.Collection;
@@ -41,6 +40,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import com.psygate.datastructures.spatial.d2.IDOrderable;
 
 /**
  *
@@ -48,7 +48,7 @@ import java.util.stream.Stream;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class QuadTree<K extends IDBoundingBoxContainable, V> extends ImmutableQuadTree<K, V> implements MutableSpatialTree<K, V, IDBoundingBox> {
+public class QuadTree<K extends IDOrderable, V> extends ImmutableQuadTree<K, V> implements MutableSpatialTree<K, V, IDBoundingBox> {
 
     private final AtomicLong modcnt = new AtomicLong(Long.MIN_VALUE);
 
@@ -84,7 +84,7 @@ public class QuadTree<K extends IDBoundingBoxContainable, V> extends ImmutableQu
             throw new IllegalArgumentException("Key outside bounds: " + getBounds() + " - " + pair.getKey());
         }
         modcnt.incrementAndGet();
-        getRoot().put(pair);
+        getRoot().add(pair);
         size++;
     }
     

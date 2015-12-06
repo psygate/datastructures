@@ -20,7 +20,6 @@ package com.psygate.datastructures.spatial.d2.trees.recursive;
 
 import com.psygate.datastructures.maps.Pair;
 import com.psygate.datastructures.spatial.d2.IDBoundingBox;
-import com.psygate.datastructures.spatial.d2.IDBoundingBoxContainable;
 import com.psygate.datastructures.spatial.d2.DBoundingBox;
 import com.psygate.datastructures.spatial.MutableSpatialTree;
 import java.util.Collection;
@@ -40,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import com.psygate.datastructures.spatial.d2.IDOrderable;
 
 /**
  * Immutable quad tree implementation. This tree cannot be modified after
@@ -49,7 +49,7 @@ import java.util.stream.StreamSupport;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class ImmutableQuadTree<K extends IDBoundingBoxContainable, V> implements NodeSizeSpatialTree<K, V, IDBoundingBox>, BoundingBoxTree<K, V, IDBoundingBox> {
+public class ImmutableQuadTree<K extends IDOrderable, V> implements NodeSizeSpatialTree<K, V, IDBoundingBox>, BoundingBoxTree<K, V, IDBoundingBox> {
 
     private final QuadNode<K, V> root;
     int size = 0;
@@ -109,7 +109,7 @@ public class ImmutableQuadTree<K extends IDBoundingBoxContainable, V> implements
     ImmutableQuadTree(Stream<? extends Map.Entry<K, V>> values, IDBoundingBox bounds, int maxNodeSize) {
         this.root = new QuadNode<>(new DBoundingBox(bounds), maxNodeSize);
         values.forEach((en) -> {
-            root.put(new Pair<>(en));
+            root.add(new Pair<>(en));
             size++;
         });
     }
@@ -219,8 +219,8 @@ public class ImmutableQuadTree<K extends IDBoundingBoxContainable, V> implements
                 return false;
             } else {
                 QuadNode<K, V> selected = stack.remove();
-                selected.getChildren().stream()
-                        .filter((cn) -> cn != null && predicate.test(cn.getBounds()))
+                selected.getChildren().values().stream()
+                        .filter((cn) -> predicate.test(cn.getBounds()))
                         .forEach((cn) -> stack.add(cn));
                 action.accept(selected);
                 return true;

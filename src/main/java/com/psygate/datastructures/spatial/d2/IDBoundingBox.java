@@ -24,7 +24,7 @@ package com.psygate.datastructures.spatial.d2;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface IDBoundingBox extends IDBoundingBoxContainable {
+public interface IDBoundingBox extends IDOrderable {
 
     /**
      *
@@ -106,7 +106,7 @@ public interface IDBoundingBox extends IDBoundingBoxContainable {
      * @param other Bounding box to check if inside this bounding box.
      * @return True if the other bounding box is inside this bounding box.f
      */
-    default boolean contains(IDBoundingBoxContainable other) {
+    default boolean contains(IDOrderable other) {
         return other.isInside(this);
     }
 
@@ -196,6 +196,16 @@ public interface IDBoundingBox extends IDBoundingBoxContainable {
             build(lx, ly, ux, cy),
             build(lx, cy, ux, uy)
         };
+    }
+
+    @Override
+    default boolean leftOf(double median, Axis axis) {
+        return getLower().leftOf(median, axis) && getUpper().leftOf(median, axis);
+    }
+
+    @Override
+    default boolean rightOf(double median, Axis axis) {
+        return getLower().rightOf(median, axis) && getUpper().rightOf(median, axis);
     }
 
     /**

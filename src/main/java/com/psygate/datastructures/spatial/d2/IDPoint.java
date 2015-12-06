@@ -24,7 +24,7 @@ package com.psygate.datastructures.spatial.d2;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface IDPoint extends IDBoundingBoxContainable {
+public interface IDPoint extends IDOrderable {
 
     /**
      *
@@ -82,6 +82,16 @@ public interface IDPoint extends IDBoundingBoxContainable {
             default:
                 throw new IllegalArgumentException("Unknown axis: " + axis);
         }
+    }
+
+    @Override
+    default boolean leftOf(double median, Axis axis) {
+        return get(axis) <= median;
+    }
+
+    @Override
+    default boolean rightOf(double median, Axis axis) {
+        return get(axis) > median;
     }
 
     @Override
