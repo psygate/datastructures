@@ -20,11 +20,13 @@ package com.psygate.datastructures.spatial.generalized;
 
 /**
  * Interface representing an N dimensional object.
+ *
  * @author psygate (https://github.com/psygate)
  */
 public interface Dimensioned {
+
     /**
-     * 
+     *
      * @return Number of dimensions this object has.
      */
     public int getDimensions();

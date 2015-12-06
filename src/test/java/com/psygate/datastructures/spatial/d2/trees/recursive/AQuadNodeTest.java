@@ -32,7 +32,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import com.psygate.datastructures.spatial.NodeSizeSpatialTree;
 import com.psygate.datastructures.spatial.d2.IDOrderable;
 
 /**

@@ -27,9 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import com.psygate.datastructures.spatial.NodeSizeSpatialTree;
 import com.psygate.datastructures.spatial.SpatialTree;
-import com.psygate.datastructures.spatial.d2.trees.BoundingBoxTree;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +37,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import com.psygate.datastructures.spatial.BoundedSpatialTree;
 import com.psygate.datastructures.spatial.d2.IDOrderable;
 
 /**
@@ -49,7 +48,7 @@ import com.psygate.datastructures.spatial.d2.IDOrderable;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class ImmutableQuadTree<K extends IDOrderable, V> implements NodeSizeSpatialTree<K, V, IDBoundingBox>, BoundingBoxTree<K, V, IDBoundingBox> {
+public class ImmutableQuadTree<K extends IDOrderable, V> implements BoundedSpatialTree<K, V, IDBoundingBox, IDBoundingBox> {
 
     private final QuadNode<K, V> root;
     int size = 0;
@@ -66,17 +65,9 @@ public class ImmutableQuadTree<K extends IDOrderable, V> implements NodeSizeSpat
     /**
      *
      * @param tree SpatialTree to copy.
-     */
-    public ImmutableQuadTree(NodeSizeSpatialTree<K, V, IDBoundingBox> tree) {
-        this(tree, tree.getMaxNodeSize());
-    }
-
-    /**
-     *
-     * @param tree SpatialTree to copy.
      * @param maxNodeSize Maximum node size of the new tree.
      */
-    public ImmutableQuadTree(SpatialTree<K, V, IDBoundingBox> tree, int maxNodeSize) {
+    public ImmutableQuadTree(BoundedSpatialTree<K, V, IDBoundingBox, IDBoundingBox> tree, int maxNodeSize) {
         this(tree.entryStream(), tree.getBounds(), maxNodeSize);
     }
 
@@ -179,7 +170,6 @@ public class ImmutableQuadTree<K extends IDOrderable, V> implements NodeSizeSpat
         return selectiveNodeStream(root, pred).iterator();
     }
 
-    @Override
     public int getMaxNodeSize() {
         return root.getMaxNodeSize();
     }
@@ -190,6 +180,31 @@ public class ImmutableQuadTree<K extends IDOrderable, V> implements NodeSizeSpat
      */
     QuadNode<K, V> getRoot() {
         return root;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return selectiveKeyStream((IDBoundingBox b) -> b.contains(key))
+                .anyMatch((k) -> Objects.equals(k, key));
+    }
+
+    @Override
+    public boolean contains(K key, V value) {
+        return selectiveEntryStream((IDBoundingBox b) -> b.contains(key))
+                .anyMatch((en) -> Objects.equals(en.getKey(), key) && Objects.equals(en.getValue(), value));
+    }
+
+    @Override
+    public boolean containsValue(V value, Predicate<IDBoundingBox> pred) {
+        return selectiveEntryStream(pred)
+                .map(Map.Entry::getValue)
+                .anyMatch((v) -> Objects.equals(v, value));
+    }
+
+    @Override
+    public boolean containsValue(V value) {
+        return valueStream()
+                .anyMatch((v) -> Objects.equals(v, value));
     }
 
     /**

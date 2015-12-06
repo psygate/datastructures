@@ -23,6 +23,7 @@ import com.psygate.datastructures.spatial.d2.IDBoundingBox;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,15 +35,9 @@ import java.util.stream.Stream;
  * @author psygate (https://github.com/psygate)
  * @param <K> Key type for the spatial tree.
  * @param <V> Value type for the spatial tree.
- * @param <B> Area type for the spatial tree.
+ * @param <Q> Query type for the spatial tree.
  */
-public interface SpatialTree<K, V, B> {
-
-    /**
-     *
-     * @return Bounds of the tree.
-     */
-    public B getBounds();
+public interface SpatialTree<K, V, Q> {
 
     /**
      *
@@ -91,7 +86,7 @@ public interface SpatialTree<K, V, B> {
      * @return A stream providing all entries contained in the tree.
      */
     default Stream<Map.Entry<K, V>> entryStream() {
-        return selectiveEntryStream((B t) -> true);
+        return selectiveEntryStream((Q t) -> true);
     }
 
     /**
@@ -101,7 +96,7 @@ public interface SpatialTree<K, V, B> {
      * @return A stream of keys that are only contained in nodes where
      * predicate.test(node.getBounds()) is true.
      */
-    default Stream<K> selectiveKeyStream(Predicate<B> predicate) {
+    default Stream<K> selectiveKeyStream(Predicate<Q> predicate) {
         return selectiveEntryStream(predicate).map(Map.Entry::getKey);
     }
 
@@ -112,7 +107,7 @@ public interface SpatialTree<K, V, B> {
      * @return A stream of values that are only contained in nodes where
      * predicate.test(node.getBounds()) is true.
      */
-    default Stream<V> selectiveValueStream(Predicate<B> predicate) {
+    default Stream<V> selectiveValueStream(Predicate<Q> predicate) {
         return selectiveEntryStream(predicate).map(Map.Entry::getValue);
     }
 
@@ -123,7 +118,7 @@ public interface SpatialTree<K, V, B> {
      * @return A stream of entries that are only contained in nodes where
      * predicate.test(node.getBounds()) is true.
      */
-    public Stream<Map.Entry<K, V>> selectiveEntryStream(Predicate<B> predicate);
+    public Stream<Map.Entry<K, V>> selectiveEntryStream(Predicate<Q> predicate);
 
     /**
      *
@@ -183,7 +178,7 @@ public interface SpatialTree<K, V, B> {
      * provide a key more than once, if the key is contained more than once
      * inside the tree.
      */
-    default Iterator<K> selectiveKeyIterator(Predicate<B> predicate) {
+    default Iterator<K> selectiveKeyIterator(Predicate<Q> predicate) {
         return new Iterator<K>() {
             private final Iterator<Map.Entry<K, V>> it = selectiveEntryIterator(predicate);
 
@@ -205,7 +200,7 @@ public interface SpatialTree<K, V, B> {
      * checking the subtree.
      * @return An iterator iterating over all values of the tree.
      */
-    default Iterator<V> selectiveValueIterator(Predicate<B> predicate) {
+    default Iterator<V> selectiveValueIterator(Predicate<Q> predicate) {
         return new Iterator<V>() {
             private final Iterator<Map.Entry<K, V>> it = selectiveEntryIterator(predicate);
 
@@ -227,7 +222,7 @@ public interface SpatialTree<K, V, B> {
      * checking the subtree.
      * @return An iterator iterating over all entries of the tree.
      */
-    default Iterator<Map.Entry<K, V>> selectiveEntryIterator(Predicate<B> predicate) {
+    default Iterator<Map.Entry<K, V>> selectiveEntryIterator(Predicate<Q> predicate) {
         return selectiveEntryStream(predicate).iterator();
     }
 
@@ -286,7 +281,7 @@ public interface SpatialTree<K, V, B> {
      * @return True if the tree contains a value where Objects.equals(value,
      * treeValue) is true, that is in a node of which the bounding box suffices
      */
-    public boolean containsValue(V value, Predicate<B> pred);
+    public boolean containsValue(V value, Predicate<Q> pred);
 
     /**
      *

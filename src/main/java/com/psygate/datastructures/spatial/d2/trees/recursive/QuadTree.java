@@ -27,9 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import com.psygate.datastructures.spatial.NodeSizeSpatialTree;
 import com.psygate.datastructures.spatial.SpatialTree;
-import com.psygate.datastructures.spatial.d2.trees.BoundingBoxTree;
 import com.psygate.datastructures.spatial.SpatialTree;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -41,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import com.psygate.datastructures.spatial.d2.IDOrderable;
+import com.psygate.datastructures.spatial.BoundedSpatialTree;
 
 /**
  *
@@ -56,8 +55,8 @@ public class QuadTree<K extends IDOrderable, V> extends ImmutableQuadTree<K, V> 
      *
      * @param tree Tree to copy.
      */
-    public QuadTree(NodeSizeSpatialTree<K, V, IDBoundingBox> tree) {
-        super(tree);
+    public QuadTree(QuadTree<K, V> tree) {
+        super(tree, tree.getMaxNodeSize());
     }
 
     /**
@@ -65,7 +64,7 @@ public class QuadTree<K extends IDOrderable, V> extends ImmutableQuadTree<K, V> 
      * @param tree Tree to copy.
      * @param maxNodeSize Maximum node size.
      */
-    public QuadTree(SpatialTree<K, V, IDBoundingBox> tree, int maxNodeSize) {
+    public QuadTree(BoundedSpatialTree<K, V, IDBoundingBox, IDBoundingBox> tree, int maxNodeSize) {
         super(tree, maxNodeSize);
     }
 
@@ -87,7 +86,7 @@ public class QuadTree<K extends IDOrderable, V> extends ImmutableQuadTree<K, V> 
         getRoot().add(pair);
         size++;
     }
-    
+
     @Override
     public Collection<V> remove(K key) {
         if (!getRoot().getBounds().contains(Objects.requireNonNull(key))) {

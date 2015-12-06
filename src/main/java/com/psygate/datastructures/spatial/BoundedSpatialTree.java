@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
  * 
  */
-package com.psygate.datastructures.spatial.d2.trees;
+package com.psygate.datastructures.spatial;
 
 import com.psygate.datastructures.spatial.SpatialTree;
 /**
@@ -26,6 +26,7 @@ import com.psygate.datastructures.spatial.SpatialTree;
 import com.psygate.datastructures.spatial.d2.IDBoundingBox;
 import java.util.Objects;
 import java.util.function.Predicate;
+import com.psygate.datastructures.spatial.d2.IDOrderable;
 import com.psygate.datastructures.spatial.d2.IDOrderable;
 
 /**
@@ -37,35 +38,13 @@ import com.psygate.datastructures.spatial.d2.IDOrderable;
  *
  * @param <K> Key type for the spatial tree.
  * @param <V> Value type for the spatial tree.
- * @param <B> Area type for the spatial tree.
+ * @param <Q> Area type for the spatial tree.
+ * @param <L> Bound type for the spatial tree.
  */
-public interface BoundingBoxTree<K extends IDOrderable, V, B extends IDBoundingBox> extends SpatialTree<K, V, B> {
+public interface BoundedSpatialTree<K extends IDOrderable, V, Q, L> extends SpatialTree<K, V, Q> {
+
+    public L getBounds();
 
     @Override
-    default boolean containsKey(K key) {
-        return selectiveKeyStream((bb) -> bb.contains(key))
-                .anyMatch((candidate) -> Objects.equals(candidate, key));
-    }
-
-    @Override
-    default boolean contains(K key, V value) {
-        return selectiveEntryStream((bb) -> bb.contains(key))
-                .anyMatch((candidate)
-                        -> Objects.equals(candidate.getKey(), key)
-                        && Objects.equals(candidate.getValue(), value));
-    }
-
-    @Override
-    default boolean containsValue(V value, Predicate<B> pred) {
-        return selectiveValueStream(pred)
-                .anyMatch((candidate)
-                        -> Objects.equals(candidate, value));
-    }
-
-    @Override
-    default boolean containsValue(V value) {
-        return valueStream()
-                .anyMatch((candidate)
-                        -> Objects.equals(candidate, value));
-    }
+    public boolean envelopes(K key);
 }

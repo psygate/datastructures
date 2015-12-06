@@ -90,6 +90,10 @@ public class KDNode<K extends IDOrderable, V> extends ANode<K, V, KDNode<K, V>, 
         return this;
     }
 
+    public double getMedian() {
+        return median;
+    }
+
     @Override
     void split() {
         setSplit(true);

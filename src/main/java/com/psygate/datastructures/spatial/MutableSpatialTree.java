@@ -38,9 +38,9 @@ import java.util.stream.Stream;
  *
  * @param <K> Key type for the spatial tree.
  * @param <V> Value type for the spatial tree.
- * @param <B> Area type for the spatial tree.
+ * @param <Q> Query type for the spatial tree.
  */
-public interface MutableSpatialTree<K, V, B> extends SpatialTree<K, V, B> {
+public interface MutableSpatialTree<K, V, Q> extends SpatialTree<K, V, Q> {
 
     /**
      *
@@ -111,7 +111,7 @@ public interface MutableSpatialTree<K, V, B> extends SpatialTree<K, V, B> {
      * @return A list containing all values that equal the value.
      */
     default Collection<V> removeValue(V value) {
-        return removeValue(value, (B b) -> true);
+        return removeValue(value, (Q b) -> true);
     }
 
     /**
@@ -132,7 +132,7 @@ public interface MutableSpatialTree<K, V, B> extends SpatialTree<K, V, B> {
      * for the value or not.
      * @return Collection containing all removed values.
      */
-    public Collection<V> removeValue(V value, Predicate<B> hint);
+    public Collection<V> removeValue(V value, Predicate<Q> hint);
 
     /**
      * Hinted value removal function, discarding nodes that to not satisfy the
@@ -143,7 +143,7 @@ public interface MutableSpatialTree<K, V, B> extends SpatialTree<K, V, B> {
      * for the value or not.
      * @return Collection containing all removed values.
      */
-    default Collection<V> removeValue(Collection<V> values, Predicate<B> hint) {
+    default Collection<V> removeValue(Collection<V> values, Predicate<Q> hint) {
         return values.stream().flatMap((v) -> removeValue(v, hint).stream()).collect(Collectors.toList());
     }
 
