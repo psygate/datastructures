@@ -24,7 +24,7 @@ package com.psygate.datastructures.spatial;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface ID2Point extends ID2Orderable {
+public interface ID2Point extends ID2Boundable {
 
     /**
      *
@@ -109,6 +109,20 @@ public interface ID2Point extends ID2Orderable {
      */
     default boolean same(ID2Point point) {
         return point.getX() == getX() && point.getY() == getY();
+    }
+
+    @Override
+    default ID2BoundingBox merge(ID2BoundingBox box) {
+        if (box.contains(this)) {
+            return box;
+        } else {
+            return ID2BoundingBox.build(
+                    Math.min(getX(), box.getLower().getX()),
+                    Math.min(getY(), box.getLower().getY()),
+                    Math.max(getX(), box.getUpper().getX()),
+                    Math.max(getY(), box.getUpper().getY())
+            );
+        }
     }
 
     /**

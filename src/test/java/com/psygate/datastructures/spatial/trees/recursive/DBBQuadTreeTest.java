@@ -42,8 +42,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.generalized.IDBoundingBox;
-import java.util.stream.BaseStream;
 
 /**
  *

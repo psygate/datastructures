@@ -22,13 +22,13 @@ import com.psygate.datastructures.util.Pair;
 import com.psygate.datastructures.spatial.Axis2D;
 import java.util.ArrayList;
 import java.util.List;
-import com.psygate.datastructures.spatial.ID2Orderable;
+import com.psygate.datastructures.spatial.ID2Boundable;
 
 /**
  *
  * @author psygate (https://github.com/psygate)
  */
-public class KDNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, KDNode<K, V>, KDNode.Subdivision> {
+public class KDNode<K extends ID2Boundable, V> extends AbstractSpatialNode<K, V, KDNode<K, V>, KDNode.Subdivision> {
 
     enum Subdivision {
         LEFT, RIGHT

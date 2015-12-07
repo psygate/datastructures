@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import com.psygate.datastructures.spatial.trees.BoundedSpatialTree;
 import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.ID2Orderable;
+import com.psygate.datastructures.spatial.ID2Boundable;
 
 /**
  * Immutable quad tree implementation. This tree cannot be modified after
@@ -43,7 +43,7 @@ import com.psygate.datastructures.spatial.ID2Orderable;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class ImmutableQuadTree<K extends ID2Orderable, V> implements BoundedSpatialTree<K, V, ID2BoundingBox, ID2BoundingBox> {
+public class ImmutableQuadTree<K extends ID2Boundable, V> implements BoundedSpatialTree<K, V, ID2BoundingBox, ID2BoundingBox> {
 
     private final QuadNode<K, V> root;
     int size = 0;

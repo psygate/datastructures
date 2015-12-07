@@ -24,7 +24,7 @@ package com.psygate.datastructures.spatial;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface ID2BoundingBox extends ID2Orderable {
+public interface ID2BoundingBox extends ID2Boundable {
 
     /**
      *
@@ -106,7 +106,7 @@ public interface ID2BoundingBox extends ID2Orderable {
      * @param other Bounding box to check if inside this bounding box.
      * @return True if the other bounding box is inside this bounding box.f
      */
-    default boolean contains(ID2Orderable other) {
+    default boolean contains(ID2Boundable other) {
         return other.isInside(this);
     }
 
@@ -130,11 +130,11 @@ public interface ID2BoundingBox extends ID2Orderable {
     }
 
     /**
-     * Merges this box with another, creating a bounding box that envelopes both
-     * boxes.
+     * Merges this bounding box with the other, constructing a box that
+     * envelopes both bounding boxes.
      *
      * @param other Box to merge with.
-     * @return Merged bounding box.
+     * @return box that envelopes both bounding boxes.
      */
     default ID2BoundingBox merge(ID2BoundingBox other) {
         return build(

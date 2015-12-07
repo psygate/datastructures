@@ -24,7 +24,7 @@ package com.psygate.datastructures.spatial;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface ID3BoundingBox extends ID3Orderable {
+public interface ID3BoundingBox extends ID3Boundable {
 
     /**
      *
@@ -124,7 +124,7 @@ public interface ID3BoundingBox extends ID3Orderable {
      * @param other Bounding box to check if inside this bounding box.
      * @return True if the other bounding box is inside this bounding box.f
      */
-    default boolean contains(ID3Orderable other) {
+    default boolean contains(ID3Boundable other) {
         return other.isInside(this);
     }
 

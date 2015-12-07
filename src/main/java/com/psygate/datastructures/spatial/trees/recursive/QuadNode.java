@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.ID2Orderable;
+import com.psygate.datastructures.spatial.ID2Boundable;
 
 /**
  * Default implementation of a simple quad tree node.
@@ -38,7 +38,7 @@ import com.psygate.datastructures.spatial.ID2Orderable;
  * @see QuadTree
  * @author psygate (https://github.com/psygate)
  */
-class QuadNode<K extends ID2Orderable, V> extends AbstractSpatialNode<K, V, QuadNode<K, V>, Quadrant> {
+class QuadNode<K extends ID2Boundable, V> extends AbstractSpatialNode<K, V, QuadNode<K, V>, Quadrant> {
 
     enum Quadrant {
         NW, NE, SW, SE

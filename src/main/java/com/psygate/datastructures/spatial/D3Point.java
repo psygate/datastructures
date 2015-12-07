@@ -96,7 +96,7 @@ public final class D3Point implements ID3Point {
 
     @Override
     public String toString() {
-        return "DPoint{" + "x=" + x + ", y=" + y + '}';
+        return "D3Point(" + x + "," + y + ", " + z + ')';
     }
 
 }

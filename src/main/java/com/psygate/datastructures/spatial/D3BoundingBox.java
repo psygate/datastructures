@@ -46,7 +46,7 @@ public final class D3BoundingBox implements ID3BoundingBox {
      * @param center Center point of the bounding box.
      * @param radius Radius from the center.
      */
-    public D3BoundingBox(D3Point center, double radius) {
+    public D3BoundingBox(ID3Point center, double radius) {
         this.lower = new D3Point(center.getX() - radius, center.getY() - radius, center.getZ() - radius);
         this.upper = new D3Point(center.getX() + radius, center.getY() + radius, center.getZ() + radius);
         this.center = new D3Point((lower.getX() + upper.getX()) / 2, (lower.getY() + upper.getY()) / 2, (lower.getZ() + upper.getZ()) / 2);
@@ -196,7 +196,7 @@ public final class D3BoundingBox implements ID3BoundingBox {
 
     @Override
     public String toString() {
-        return "DBoundingBox{" + "lower=" + lower + ", upper=" + upper + '}';
+        return "DBoundingBox{" + lower + ", " + upper + '}';
     }
 
 }

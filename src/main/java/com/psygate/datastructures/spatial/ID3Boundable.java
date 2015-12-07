@@ -22,7 +22,7 @@ package com.psygate.datastructures.spatial;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface ID3Orderable {
+public interface ID3Boundable {
 
     /**
      * Checks if this is inside the provided bounding box.
@@ -49,4 +49,12 @@ public interface ID3Orderable {
      * @return True if the object is right of the pivot.
      */
     boolean rightOf(double median, Axis3D axis);
+
+    /**
+     * Expands the provided bounding box to envelope this object.
+     *
+     * @param box Box to expand.
+     * @return New bouding box enveloping this object.
+     */
+    ID3BoundingBox merge(ID3BoundingBox box);
 }

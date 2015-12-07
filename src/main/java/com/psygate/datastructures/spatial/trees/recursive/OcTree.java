@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import com.psygate.datastructures.spatial.trees.BoundedSpatialTree;
 import com.psygate.datastructures.spatial.ID3BoundingBox;
-import com.psygate.datastructures.spatial.ID3Orderable;
+import com.psygate.datastructures.spatial.ID3Boundable;
 
 /**
  *
@@ -40,7 +40,7 @@ import com.psygate.datastructures.spatial.ID3Orderable;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class OcTree<K extends ID3Orderable, V> extends ImmutableOcTree<K, V> implements MutableSpatialTree<K, V, ID3BoundingBox> {
+public class OcTree<K extends ID3Boundable, V> extends ImmutableOcTree<K, V> implements MutableSpatialTree<K, V, ID3BoundingBox> {
 
     private final AtomicLong modcnt = new AtomicLong(Long.MIN_VALUE);
 

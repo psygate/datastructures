@@ -24,7 +24,7 @@ package com.psygate.datastructures.spatial;
  *
  * @author psygate (https://github.com/psygate)
  */
-public interface ID3Point extends ID3Orderable {
+public interface ID3Point extends ID3Boundable {
 
     /**
      *
@@ -119,6 +119,22 @@ public interface ID3Point extends ID3Orderable {
      */
     default boolean same(ID3Point point) {
         return point.getX() == getX() && point.getY() == getY() && point.getZ() == getZ();
+    }
+
+    @Override
+    public default ID3BoundingBox merge(ID3BoundingBox box) {
+        if (box.contains(this)) {
+            return box;
+        } else {
+            return ID3BoundingBox.build(
+                    Math.min(getX(), box.getLower().getX()),
+                    Math.min(getY(), box.getLower().getY()),
+                    Math.min(getZ(), box.getLower().getZ()),
+                    Math.max(getX(), box.getUpper().getX()),
+                    Math.max(getY(), box.getUpper().getY()),
+                    Math.max(getZ(), box.getUpper().getZ())
+            );
+        }
     }
 
     /**

@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import com.psygate.datastructures.spatial.ID3BoundingBox;
-import com.psygate.datastructures.spatial.ID3Orderable;
+import com.psygate.datastructures.spatial.ID3Boundable;
 
 /**
  * Default implementation of a simple quad tree node.
@@ -38,7 +38,7 @@ import com.psygate.datastructures.spatial.ID3Orderable;
  * @see QuadTree
  * @author psygate (https://github.com/psygate)
  */
-class OcNode<K extends ID3Orderable, V> extends AbstractSpatialNode<K, V, OcNode<K, V>, Quadrant> {
+class OcNode<K extends ID3Boundable, V> extends AbstractSpatialNode<K, V, OcNode<K, V>, Quadrant> {
 
     enum Quadrant {
         UNW, UNE, USW, USE,

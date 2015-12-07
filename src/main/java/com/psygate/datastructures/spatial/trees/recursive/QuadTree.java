@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import com.psygate.datastructures.spatial.trees.BoundedSpatialTree;
 import com.psygate.datastructures.spatial.ID2BoundingBox;
-import com.psygate.datastructures.spatial.ID2Orderable;
+import com.psygate.datastructures.spatial.ID2Boundable;
 
 /**
  *
@@ -40,7 +40,7 @@ import com.psygate.datastructures.spatial.ID2Orderable;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class QuadTree<K extends ID2Orderable, V> extends ImmutableQuadTree<K, V> implements MutableSpatialTree<K, V, ID2BoundingBox> {
+public class QuadTree<K extends ID2Boundable, V> extends ImmutableQuadTree<K, V> implements MutableSpatialTree<K, V, ID2BoundingBox> {
 
     private final AtomicLong modcnt = new AtomicLong(Long.MIN_VALUE);
 
